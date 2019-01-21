@@ -2,7 +2,7 @@
 
 // Declare Variables
 int ledPins[] = {11,12,13};
-int analogOut;
+int analogOut0, analogOut1, analogAvg;
 int idx;
 
 
@@ -21,15 +21,19 @@ void setup() {
 
 
 void loop() {
-  // Read analog sensor and print
-  analogOut = analogRead(A0);
-  Serial.print(analogOut);
+  // Read analog sensor and print results
+  analogOut0 = analogRead(A0);
+  analogOut1 = analogRead(A1);
+  analogAvg = (analogOut0 + analogOut1) / 2;
+  Serial.print(analogOut0); Serial.print("  ");
+  Serial.print(analogOut1); Serial.print("  ");
+  Serial.print(analogAvg);
 
   // Display LED based on humidity level
-  if (analogOut < 200){
+  if (analogAvg < 200){
     digitalWrite(ledPins[0], HIGH);
     Serial.println("\tLow");
-  } else if (analogOut >= 200 && analogOut < 400){
+  } else if (analogAvg >= 200 && analogAvg < 400){
     digitalWrite(ledPins[1], HIGH);
     Serial.println("\tMid");
   } else {
