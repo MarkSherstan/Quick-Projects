@@ -1,5 +1,7 @@
 # Soil Humidity Classifier for Home Plants
-Program for determining the soil humidity levels in various house hold plants. 
+Program for determining the soil humidity levels in various house hold plants.
+
+Also using the project to test the basic functionality of PlatformIO instead of Arduino IDE.
 
 ## To Do
 - [ ] Fritzing wiring diagram
