@@ -7,7 +7,16 @@ Also using the project to test the basic functionality of PlatformIO instead of 
 - [ ] Fritzing wiring diagram
 - [ ] Initial test(s)
 - [ ] Quantify humidity levels
-- [ ] Make 3D printed case
+- [x] Make 3D printed case
+- [x] Add 2nd sensor
+
+## Usage
+Build and upload with PlatformIO or copy and paste `\src\main.cpp` excluding the `#include <Arduino.h>` header into Arduino IDE and compile as normal.
+
+The following lights indicate the corresponding humidity levels.
+* One Red --> Low
+* Green --> Good
+* Two Red --> High
 
 ## Specs and Data Sheets
 Purchased from Banggood and came with the following information:
@@ -17,3 +26,6 @@ Purchased from Banggood and came with the following information:
 * Output voltage: 0-2.3V (2.3V is completely immersed in water voltage value),
 * 5V power supply, the greater the humidity, the greater the output voltage.
 * Sensor type: Analog Output
+
+## Wiring schematic
+<!-- ![]() -->

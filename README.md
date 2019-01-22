@@ -5,4 +5,4 @@ Repository to store and organize smaller and quick projects on the fly.
 None
 
 ## Projects Under Development
-* soildHumidity - Program for determining the soil humidity levels in various house hold plants. 
+* soilHumidity - Program for determining the soil humidity levels in various house hold planters.
