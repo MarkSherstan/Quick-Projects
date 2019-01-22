@@ -32,12 +32,23 @@ void loop() {
   // Display LED based on humidity level
   if (analogAvg < 200){
     digitalWrite(ledPins[0], HIGH);
+    digitalWrite(ledPins[1], LOW);
+    digitalWrite(ledPins[2], LOW);
+
     Serial.println("\tLow");
+
   } else if (analogAvg >= 200 && analogAvg < 400){
+    digitalWrite(ledPins[0], LOW);
     digitalWrite(ledPins[1], HIGH);
+    digitalWrite(ledPins[2], LOW);
+
     Serial.println("\tMid");
+
   } else {
+    digitalWrite(ledPins[0], HIGH);
+    digitalWrite(ledPins[1], LOW);
     digitalWrite(ledPins[2], HIGH);
+
     Serial.println("\tHigh");
   }
 
