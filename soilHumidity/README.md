@@ -22,3 +22,6 @@ The top of the case was modified from [this](https://www.thingiverse.com/thing:9
 
 ## Wiring schematic
 ![](https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/wiringDiagram.png)
+
+## Cover Photo
+![](https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/coverPhoto1.png)
