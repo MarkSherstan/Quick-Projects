@@ -21,7 +21,7 @@ Sensor purchased from Banggood and came with the following information:
 The top of the case was modified from [this](https://www.thingiverse.com/thing:994827) model on Thingiverse. CAD files can be found in the `case` directory.  
 
 ## Wiring schematic
-![](https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/wiringDiagram.png)
+<img src="https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/wiringDiagram.png" width="500">
 
 ## Cover Photo
-![](https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/coverPhoto1.png)
+<img src="https://github.com/MarkSherstan/Quick-Projects/blob/master/soilHumidity/coverPhoto1.png" width="500">
