@@ -62,6 +62,11 @@ void loop() {
   } else if (relativeHumidity >= 0.8 && relativeHumidity < 0.9) {
     writeNumber(9);
   } else {
+    byte pin = 2;
+    for (byte idx = 0; idx < 7; ++idx) {
+      digitalWrite(pin, LOW);
+      ++pin;
+    }
     digitalWrite(9,HIGH);
     delay(100);
   }
