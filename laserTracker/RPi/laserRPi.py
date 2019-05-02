@@ -11,12 +11,20 @@ class video:
 		# Video properties
 		self.width = 720
 		self.height = 480
-		self.FPS = 30
+		self.FPS = 10
 
-		# Define location of object and laser
+		# HSV mask range
+		self.HSVlower = np.array([140,0,200])
+		self.HSVupper = np.array([160,255,255])
+
+		# Kernal
+		self.kernel = np.ones((7,7), np.uint8)
+
+		# Location of object and laser
 		self.objectX = 0
 		self.objectY = 0
-		self.laserPos = 0
+		self.laserX = 0
+		self.laserY = 0
 
 	def startCamera(self):
 		# Create video capture object and configure settings
@@ -25,41 +33,45 @@ class video:
 		self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
 		self.cam.set(cv2.CAP_PROP_FPS, self.FPS)
 
-		# Get rid of initial garbo frames
-		for ii in range(10):
-			_, frame = self.cam.read()
-
-		# Get a good first Frame for mask
-		_, frame = self.cam.read()
-		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		gray = cv2.GaussianBlur(gray, (7, 7), 0)
-		self.firstFrame = gray
+		# Build the foreground/background detection algorithm
+		self.subtractor = cv2.createBackgroundSubtractorMOG2(history=600, varThreshold=100, detectShadows=False)
 
 	def findObject(self):
 		# Read a frame
 		_, frame = self.cam.read()
 
-		# Removes high frequency components and converts to HSV and gray color space
-		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		gray = cv2.GaussianBlur(gray, (7, 7), 0) # To track lazer --> gray = cv2.GaussianBlur(gray, (3, 3), 0)
+		# Dilate the frame and convert to HSV
+		frameDilate = cv2.dilate(frame, self.kernel, iterations=1)
+		HSV = cv2.cvtColor(frameDilate, cv2.COLOR_BGR2HSV)
 
-		# Find the laser dot
-		(minVal, maxVal, minLoc, self.laserPos) = cv2.minMaxLoc(gray)
+		# Laser mask
+		laserMask = cv2.inRange(HSV, self.HSVlower, self.HSVupper)
 
-		# compute the absolute difference between the current frame and
-		# first frame\
-		frameDelta = cv2.absdiff(self.firstFrame, gray)
-		thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+		# cv2.RETR_EXTERNAL: Only extreme outer flags. All child contours are left behind.
+		# CHAIN_APPROX_SIMPLE: Removes all redundant points and compresses the contour.
+		laser = cv2.findContours(laserMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		laser = imutils.grab_contours(laser)
 
-		# dilate the thresholded image to fill in holes, then find contours
-		# on thresholded image
-		thresh = cv2.dilate(thresh, None, iterations=2)
-		cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-		cnts = imutils.grab_contours(cnts)
+		# Only proceed if laser was found
+		if len(laser) > 0:
+			c = max(laser, key=cv2.contourArea)
+			((x, y), radius) = cv2.minEnclosingCircle(c)
+			self.laserX = int(x)
+			self.laserY = int(y)
+
+		# Motion mask
+		motionMask = self.subtractor.apply(frame)
+		motionMask = cv2.erode(motionMask, self.kernel, iterations=1)
+		motionMask = cv2.dilate(motionMask, self.kernel, iterations=1)
+
+		# cv2.RETR_EXTERNAL: Only extreme outer flags. All child contours are left behind.
+		# CHAIN_APPROX_SIMPLE: Removes all redundant points and compresses the contour.
+		motion = cv2.findContours(motionMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		motion = imutils.grab_contours(motion)
 
 		# only proceed if at least one contour was found
-		if len(cnts) > 0:
-			c = max(cnts, key=cv2.contourArea)
+		if len(motion) > 0:
+			c = max(motion, key=cv2.contourArea)
 			((x, y), radius) = cv2.minEnclosingCircle(c)
 			self.objectX = int(x)
 			self.objectY = int(y)
@@ -142,16 +154,18 @@ def main():
 	h = hardware()
 	h.startControl()
 
+	# Run for a set amount of time
 	T = int(input("Enter time to run program: "))
 	startTime = time.time()
 	count = 0
 
 	while(time.time() < (startTime + T)):
 		v.findObject()
+		print(count, v.laserX, v.laserY, v.objectX, v.objectY)
 		count += 1
-		# print(count, v.laserPos[0], v.laserPos[1], v.objectX, v.objectY)
-		h.track(v.laserPos[0], v.laserPos[1], v.objectX, v.objectY)
+		# h.track(v.laserPos[0], v.laserPos[1], v.objectX, v.objectY)
 
+	# Print average frame rate
 	print("Frames per second: ", int(count / (time.time()-startTime)))
 
 	# Close all connections on the pi
