@@ -1,0 +1,32 @@
+#PoGo
+Playing around with OpenCV and JSON files to make a spreadsheet for Pokemon Go.
+
+## Requirements
+Software requirements and install steps for MacOS.
+
+```
+brew install tesseract --HEAD
+
+
+pip3 install pytesseract
+pip3 install opencv-python
+pip3 install imutils
+```
+
+## Use
+Photos must be 1125 × 2436 and `*.PNG` format.
+
+1. Upload regular screenshot to `\dataA`
+2. Upload IV screenshot to `dataB`
+3. Run `main.py` and edit lines accordingly
+```
+# Log data -> Filename, printFlag, csvFlag
+G.logDataA('dataA.csv', True, True)
+G.logDataB('dataB.csv', True, True)
+```
+4. Retrieve the most up to date GAME_MASTER.json file: `wget https://raw.githubusercontent.com/pokemongo-dev-contrib/pokemongo-game-master/master/versions/latest/GAME_MASTER.json`
+5. To do... 
+
+
+## Links
+https://github.com/tesseract-ocr/tesseract/blob/master/doc/tesseract.1.asc
