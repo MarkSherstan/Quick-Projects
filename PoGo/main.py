@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 import pytesseract
 import imutils
+import math
 import glob
+import json
 import cv2
+import re
 
 class getData:
 	def __init__(self):
@@ -312,12 +315,242 @@ class getData:
 			df.to_csv(fileName, index=None, header=True)
 			print('File saved to:\t' + fileName)
 
+class calculateData:
+	def __init__(self):
+		self.MASTER = None
+
+		self.gameData = None
+		self.moveData = None
+
+		self.CPM = [0.094, 0.135137432, 0.16639787, 0.192650919, 0.21573247, 0.236572661, 0.25572005,
+				   0.273530381, 0.29024988, 0.306057378, 0.3210876, 0.335445036, 0.34921268, 0.362457751,
+				   0.3752356, 0.387592416, 0.39956728, 0.411193551, 0.4225, 0.432926409, 0.44310755,
+				   0.453059959, 0.4627984, 0.472336093, 0.48168495, 0.4908558, 0.49985844, 0.508701765,
+				   0.51739395, 0.525942511, 0.5343543, 0.542635738, 0.5507927, 0.558830586, 0.5667545,
+				   0.574569133, 0.5822789, 0.589887907, 0.5974, 0.604823665, 0.6121573, 0.619404122,
+				   0.6265671, 0.633649143, 0.64065295, 0.647580967, 0.65443563, 0.661219252, 0.667934,
+				   0.674581896, 0.6811649, 0.687684904, 0.69414365, 0.70054287, 0.7068842, 0.713169109,
+				   0.7193991, 0.725575614, 0.7317, 0.734741009, 0.7377695, 0.740785594, 0.74378943,
+				   0.746781211, 0.74976104, 0.752729087, 0.7556855, 0.758630368, 0.76156384, 0.764486065,
+				   0.76739717, 0.770297266, 0.7731865, 0.776064962, 0.77893275, 0.781790055, 0.784637,
+				   0.787473608, 0.7903]
+
+	def loadImgData(self, fileA, fileB):
+		# Load the 2 CSV files and index by ID
+		A = pd.read_csv(fileA, header = 0, names = ['ID', 'Lucky', 'Candy Count',
+			'Fast Attack', 'Charge Attack 1', 'Charge Attach 2'], index_col='ID')
+
+		B = pd.read_csv(fileB, header = 0, names = ['ID', 'Specie', 'CP', 'ATK_IV',
+			'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Data', 'Catch Location'], index_col='ID')
+
+		# Merge into single data frame
+		self.MASTER = B.merge(A, how='outer', left_index=True, right_index=True)
+
+	def loadJsonData(self, gameMasterFile):
+		# Load in the GAME_MASTER file
+		with open(gameMasterFile) as jsonFile:
+			data = json.load(jsonFile)
+
+		# Regex to match V####_POKEMON_
+		patternA = re.compile('^V\d{4}_POKEMON_.*$')
+		patternB = re.compile('^V\d{4}_MOVE_.*$')
+
+		# List for storage
+		pokemonGameData = []
+		pokemonMoveData = []
+
+		for template in data['itemTemplates']:
+			# Pokemon info
+			if patternA.match(template['templateId']):
+				# Make a dictionary row
+				dictRow = {}
+
+				# Pokemon Template ID
+				dictRow['TemplateId'] = template['templateId']
+
+				# Pokemon Number
+				pokemonNumber = re.findall("\d{4}", template['templateId'])
+				pokemonNumber = int(pokemonNumber[0])
+				dictRow['Number'] = pokemonNumber
+
+				# Pokemon Name
+				name = template['pokemonSettings']['pokemonId']
+				dictRow['Name'] = name
+
+				# Pokemon form and remove name
+				form = template['pokemonSettings'].get('form', '')
+				form = form.replace(name+'_', '').replace('_',' ')
+				dictRow['Form'] = form
+
+				# Stats
+				dictRow['baseStamina'] = template['pokemonSettings']['stats']['baseStamina']
+				dictRow['baseAttack'] = template['pokemonSettings']['stats']['baseAttack']
+				dictRow['baseDefense'] = template['pokemonSettings']['stats']['baseDefense']
+
+				# Walking distance and evolution cost
+				dictRow['kmBuddyDistance'] = int(template['pokemonSettings'].get('kmBuddyDistance', 0.0))
+				try:
+					dictRow['candyCost'] = int(template['pokemonSettings'].get('candyToEvolve', 0.0))
+				except:
+					dictRow['candyCost'] = -1
+
+				# Get type
+				try:
+					type = template['pokemonSettings'].get('type', '')
+					type = type.replace('POKEMON_TYPE_','')
+					dictRow['type'] = type
+
+					type2 = template['pokemonSettings'].get('type2', '')
+					type2 = type2.replace('POKEMON_TYPE_','')
+					dictRow['type2'] = type2
+				except:
+					pokemonType = template['pokemonSettings'].get('pokemonType', '')
+					pokemonType = pokemonType.replace('POKEMON_TYPE_','')
+					dictRow['pokemonType'] = pokemonType
+
+				#if form != 'NORMAL': # ignore NORMAL forms because they are duplicates
+				pokemonGameData.append(dictRow)
+
+			# Moveset info
+			if patternB.match(template['templateId']):
+				# Make a dictionary row
+				dictRow = {}
+
+				# Pokemon Template ID
+				dictRow['TemplateId'] = template['templateId']
+
+				# movementId
+				movementId = template['moveSettings']['movementId']
+				movementId = movementId.replace('_', ' ')
+				movementId = movementId.replace(' FAST','')
+				dictRow['movementId'] = movementId
+
+				# Power
+				dictRow['power'] = int(template['moveSettings'].get('power', 0.0))
+
+				# Type
+				pokemonType = template['moveSettings']['pokemonType']
+				pokemonType = pokemonType.replace('POKEMON_TYPE_','')
+				dictRow['pokemonType'] = pokemonType
+
+				# Log the data
+				pokemonMoveData.append(dictRow)
+
+		self.gameData = pd.DataFrame(pokemonGameData)
+		self.moveData = pd.DataFrame(pokemonMoveData)
+
+	def halfRound(self, num):
+		return round(num * 2.0) / 2.0
+
+	def calcLevelAndBaseStats(self):
+		# Create list for writing
+		levelList = []
+		atkBaseList = []
+		defBaseList = []
+		staBaseList = []
+
+		for ii in range(self.MASTER.shape[0]):
+			# Get value from json
+			str = self.MASTER['Specie'][ii]
+			row = self.gameData.index[self.gameData['Name'] == str.upper()][0]
+
+			Base_Attack = self.gameData['baseAttack'][row]
+			Base_Defense = self.gameData['baseDefense'][row]
+			Base_Stamina = self.gameData['baseStamina'][row]
+
+			# Find CP multiplier
+			CP_Multiplier = math.sqrt((10 * self.MASTER['CP'][ii]) /
+							((Base_Attack + self.MASTER['ATK_IV'][ii]) *
+							(Base_Defense + self.MASTER['DEF_IV'][ii])**0.5 *
+							(Base_Stamina + self.MASTER['STA_IV'][ii])**0.5))
+
+			# Reverse CP multiplier to find level
+			levelList.append(self.halfRound(np.interp(CP_Multiplier, self.CPM,
+							 np.arange(1, 40.5, 0.5).tolist())))
+
+			# Append lists for base stats
+			atkBaseList.append(Base_Attack)
+			defBaseList.append(Base_Defense)
+			staBaseList.append(Base_Stamina)
+
+		# Add to data frame
+		self.MASTER['Level'] = levelList
+		self.MASTER['ATK_Base'] = atkBaseList
+		self.MASTER['DEF_Base'] = defBaseList
+		self.MASTER['STA_Base'] = staBaseList
+
+	def numberTypeCandy(self):
+		# Create list for writing
+		pokedexNum = []
+		type = []
+		type2 = []
+		walkDistance = []
+		evolutionCost = []
+
+		for ii in range(self.MASTER.shape[0]):
+			# Get index from json using name
+			str = self.MASTER['Specie'][ii]
+			row = self.gameData.index[self.gameData['Name'] == str.upper()][0]
+
+			# Append data to a list
+			pokedexNum.append(self.gameData['Number'][row])
+			type.append(self.gameData['type'][row])
+			type2.append(self.gameData['type2'][row])
+			walkDistance.append(self.gameData['kmBuddyDistance'][row])
+			evolutionCost.append(self.gameData['candyCost'][row])
+
+		# save to dataframe
+		self.MASTER['Pokedex Number'] = pokedexNum
+		self.MASTER['type'] = type
+		self.MASTER['type2'] = type2
+		self.MASTER['Walking Distance'] = walkDistance
+		self.MASTER['Evolution Cost'] = evolutionCost
+
+	def moves(self):
+		# Create lists for writing
+		fastType = []
+		fastPwr = []
+		chrgType = []
+		chrgPwr = []
+
+		for ii in range(self.MASTER.shape[0]):
+			# Get index from json using attack
+			str = self.MASTER['Fast Attack'][ii]
+			row = self.moveData.index[self.moveData['movementId'] == str.upper()][0]
+			fastType.append(self.moveData['pokemonType'][row])
+			fastPwr.append(self.moveData['power'][row])
+
+			str = self.MASTER['Charge Attack 1'][ii]
+			row = self.moveData.index[self.moveData['movementId'] == str.upper()][0]
+			chrgType.append(self.moveData['pokemonType'][row])
+			chrgPwr.append(self.moveData['power'][row])
+
+		self.MASTER['Fast Attack Type'] = fastType
+		self.MASTER['Fast Attack Power'] = fastPwr
+		self.MASTER['Charge Attack Type'] = chrgType
+		self.MASTER['Charge Attack Power'] = chrgPwr
+
+	def exportData(self, fileA, fileB, JSON, fileName):
+		# Run all the processing
+		self.loadImgData(fileA, fileB)
+		self.loadJsonData(JSON)
+		self.calcLevelAndBaseStats()
+		self.numberTypeCandy()
+		self.moves()
+
+		# Save to file named
+		self.MASTER.to_csv(fileName)
+
 def main():
 	G = getData()
+	C = calculateData()
 
 	# Log data -> Filename, printFlag, csvFlag
-	G.logDataA('dataA.csv', True, True)
-	G.logDataB('dataB.csv', True, True)
+	# G.logDataA('dataA.csv', True, True)
+	# G.logDataB('dataB.csv', True, True)
+
+	# Load data -> FileA, FileB, gameMasterFile, file2save
+	C.exportData('dataA.csv', 'dataB.csv', 'GAME_MASTER.json', 'MASTER.csv')
 
 # Main loop
 if __name__ == '__main__':
