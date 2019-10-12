@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import pytesseract
 import imutils
+import time
 import math
 import glob
 import json
@@ -55,13 +56,15 @@ class getData:
 
 	def getID(self):
 		# img[y1:y2, x1:x2]
-		ROI = self.GRAY[900:1020, 275:850]
+		ROI = self.GRAY[900:1010, 275:850]
 
 		# Threshold and invert the image
 		_, ROI = cv2.threshold(ROI, 200, 255, cv2.THRESH_BINARY)
 
 		# OCR the name
-		self.ID = str(pytesseract.image_to_string(ROI)) + str(self.CP)
+		self.ID = str(pytesseract.image_to_string(ROI, lang='eng',
+			config='--psm 7 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')) \
+			+ str(self.CP)
 
 	def getSpecieDateLocation(self):
 		# img[y1:y2, x1:x2]
@@ -83,16 +86,14 @@ class getData:
 
 	def getCP(self):
 		# img[y1:y2, x1:x2]
-		ROI = self.GRAY[120:240, 340:730]
+		ROI = self.GRAY[120:230, 340:730]
 
 		# Remove background by thresholding
 		_, ROI = cv2.threshold(ROI, 250, 255, cv2.THRESH_BINARY)
-		ROI = cv2.cvtColor(ROI, cv2.COLOR_GRAY2RGB)
 
-		# Erode and dialte the image to get rid of CP and make readable
+		# Bold the letters for easier OCR
 		kernel = np.ones((2,2),np.uint8)
-		ROI = cv2.erode(ROI, kernel, iterations = 2)
-		ROI = cv2.dilate(ROI, kernel, iterations = 4)
+		ROI = cv2.dilate(ROI, kernel, iterations = 3)
 
 		# Invert image for better OCR
 		ROI = cv2.bitwise_not(ROI)
@@ -214,12 +215,12 @@ class getData:
 
 		# Assign moves to variables
 		if len(moves) is 3:
-			self.FTM = moves[0]
-			self.CTM1 = moves[1]
-			self.CTM2 = moves[2]
+			self.FTM = moves[0].replace('-',' ')
+			self.CTM1 = moves[1].replace('-',' ')
+			self.CTM2 = moves[2].replace('-',' ')
 		elif len(moves) is 2:
-			self.FTM = moves[0]
-			self.CTM1 = moves[1]
+			self.FTM = moves[0].replace('-',' ')
+			self.CTM1 = moves[1].replace('-',' ')
 
 	def resetVariables(self):
 		# Reset variables to None so errors can be regonized
@@ -275,10 +276,10 @@ class getData:
 		# Write data to CSV and display to user
 		if csvFlag is True:
 			df = pd.DataFrame(tempData, columns=['ID', 'Lucky', 'Candy Count',
-				'Fast Attack', 'Charge Attack 1', 'Charge Attach 2'])
+				'Fast Attack', 'Charge Attack 1', 'Charge Attack 2'])
 
 			df.to_csv(fileName, index=None, header=True)
-			print('File saved to:\t' + fileName)
+			print('\nFile saved to:\t' + fileName + '\n\n\n')
 
 	def logDataB(self, fileName, printFlag, csvFlag):
 		# Storage variable
@@ -310,10 +311,10 @@ class getData:
 		# Write data to CSV and display to user
 		if csvFlag is True:
 			df = pd.DataFrame(tempData, columns=['ID', 'Specie', 'CP', 'ATK_IV',
-				'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Data', 'Catch Location'])
+				'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Date', 'Catch Location'])
 
 			df.to_csv(fileName, index=None, header=True)
-			print('File saved to:\t' + fileName)
+			print('\nFile saved to:\t' + fileName + '\n\n\n')
 
 class calculateData:
 	def __init__(self):
@@ -338,10 +339,10 @@ class calculateData:
 	def loadImgData(self, fileA, fileB):
 		# Load the 2 CSV files and index by ID
 		A = pd.read_csv(fileA, header = 0, names = ['ID', 'Lucky', 'Candy Count',
-			'Fast Attack', 'Charge Attack 1', 'Charge Attach 2'], index_col='ID')
+			'Fast Attack', 'Charge Attack 1', 'Charge Attack 2'], index_col='ID')
 
 		B = pd.read_csv(fileB, header = 0, names = ['ID', 'Specie', 'CP', 'ATK_IV',
-			'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Data', 'Catch Location'], index_col='ID')
+			'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Date', 'Catch Location'], index_col='ID')
 
 		# Merge into single data frame
 		self.MASTER = B.merge(A, how='outer', left_index=True, right_index=True)
@@ -538,19 +539,35 @@ class calculateData:
 		self.numberTypeCandy()
 		self.moves()
 
-		# Save to file named
+		# Rearrange columns
+		self.MASTER = self.MASTER[['Pokedex Number', 'Specie', 'CP', 'type',
+			'type2', 'ATK_IV', 'DEF_IV', 'STA_IV', 'Percent IV',
+			'ATK_Base', 'DEF_Base', 'STA_Base', 'Level',
+			'Fast Attack', 'Fast Attack Type', 'Fast Attack Power',
+			'Charge Attack 1', 'Charge Attack Type', 'Charge Attack Power',
+			'Charge Attack 2', 'Walking Distance', 'Candy Count', 'Evolution Cost',
+			'Lucky', 'Catch Date', 'Catch Location']]
+
+		# Save to file
 		self.MASTER.to_csv(fileName)
+		print('\nFile saved to:\t' + fileName + '\n')
 
 def main():
 	G = getData()
 	C = calculateData()
 
+	# Start time
+	startTime = time.time()
+
 	# Log data -> Filename, printFlag, csvFlag
-	# G.logDataA('dataA.csv', True, True)
-	# G.logDataB('dataB.csv', True, True)
+	G.logDataA('dataA.csv', True, True)
+	G.logDataB('dataB.csv', True, True)
 
 	# Load data -> FileA, FileB, gameMasterFile, file2save
 	C.exportData('dataA.csv', 'dataB.csv', 'GAME_MASTER.json', 'MASTER.csv')
+
+	# Time elapsed
+	print('Time elapsed: ', time.time() - startTime)
 
 # Main loop
 if __name__ == '__main__':
