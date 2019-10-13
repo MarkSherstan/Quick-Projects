@@ -9,7 +9,7 @@ import json
 import cv2
 import re
 
-class getData:
+class getImgData:
 	def __init__(self):
 		self.GRAY = None
 		self.BGR = None
@@ -26,13 +26,6 @@ class getData:
 		self.IV = None
 
 		self.isLucky = None
-		self.candyCount = None
-
-		self.FTM = None
-		self.CTM1 = None
-		self.CTM2 = None
-
-		self.ID = None
 
 		self.BGRlower = np.array([10,10,10])
 		self.BGRupper = np.array([128,128,128])
@@ -43,28 +36,6 @@ class getData:
 
 		# Convert to gray color space
 		self.GRAY = cv2.cvtColor(self.BGR, cv2.COLOR_BGR2GRAY)
-
-	def showImage(self):
-		# Display image
-		cv2.imshow('BGR', self.BGR)
-		cv2.imshow('GRAY', self.GRAY)
-
-		# Press key (q) to close
-		k = cv2.waitKey(0) & 0xFF
-		if k == ord('q'):
-			cv2.destroyAllWindows()
-
-	def getID(self):
-		# img[y1:y2, x1:x2]
-		ROI = self.GRAY[900:1010, 275:850]
-
-		# Threshold and invert the image
-		_, ROI = cv2.threshold(ROI, 200, 255, cv2.THRESH_BINARY)
-
-		# OCR the name
-		self.ID = str(pytesseract.image_to_string(ROI, lang='eng',
-			config='--psm 7 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')) \
-			+ str(self.CP)
 
 	def getSpecieDateLocation(self):
 		# img[y1:y2, x1:x2]
@@ -101,6 +72,24 @@ class getData:
 		# OCR the value
 		self.CP = pytesseract.image_to_string(ROI, lang='eng',
 			config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789')
+
+		# Error case for CP
+		try:
+			# Convert CP to int
+			self.CP = int(self.CP)
+
+			# If CP is impossibly high, get input from user
+			if self.CP > 5000:
+				cv2.imshow('ERROR', self.BGR[120:230, 340:730])
+				cv2.waitKey(1)
+				self.CP = int(input("Input CP: "))
+				cv2.destroyAllWindows()
+		except:
+			# If int conversion went wrong get input from user
+			cv2.imshow('ERROR', self.BGR[120:230, 340:730])
+			cv2.waitKey(1)
+			self.CP = int(input("Input CP: "))
+			cv2.destroyAllWindows()
 
 	def getStats(self):
 		# Cropping coordinates
@@ -147,80 +136,17 @@ class getData:
 		self.STA = int(stats[2])
 		self.IV = int(round((sum(stats) / 45) * 100))
 
-	def getLuckyCandy(self):
-		# img[y1:y2, x1:x2] -> Lucky?
+	def luck(self):
+		# img[y1:y2, x1:x2]
 		ROI = self.GRAY[1000:1070, 300:800]
 
 		# Check string for lucky
 		str = pytesseract.image_to_string(ROI).split()
 
-		# Change crop area based on luck
 		if str[0] == 'LUCKY':
-			# True path
 			self.isLucky = True
-
-			# img[y1:y2, x1:x2] -> Candy
-			ROI = self.BGR[1450:1520, 745:845]
-			ROI = cv2.inRange(ROI, self.BGRlower, self.BGRupper)
-
-			# Invert image for better OCR
-			ROI = cv2.bitwise_not(ROI)
-
-			self.candyCount = pytesseract.image_to_string(ROI,
-				config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789')
 		else:
-			# False path
 			self.isLucky = False
-
-			# img[y1:y2, x1:x2] -> Candy
-			ROI = self.BGR[1400:1460, 745:845]
-			ROI = cv2.inRange(ROI, self.BGRlower, self.BGRupper)
-
-			# Invert image for better OCR
-			ROI = cv2.bitwise_not(ROI)
-
-			self.candyCount = pytesseract.image_to_string(ROI,
-				config='--psm 7 --oem 3 -c tessedit_char_whitelist=0123456789')
-
-	def getMoves(self):
-		# img[y1:y2, x1:x2]
-		ROI = self.BGR[1890:2360, 145:600]
-
-		# Threshold image
-		ROI = cv2.inRange(ROI, self.BGRlower, self.BGRupper)
-
-		# Erode and dialte the image to get rid of unwanted pixels
-		kernel = np.ones((2,2),np.uint8)
-		ROI = cv2.erode(ROI, kernel, iterations = 2)
-		ROI = cv2.dilate(ROI, kernel, iterations = 2)
-
-		# cv2.RETR_EXTERNAL: Only extreme outer flags. All child contours are left behind.
-		# CHAIN_APPROX_SIMPLE: Removes all redundant points and compresses the contour.
-		region = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-		region = imutils.grab_contours(region)
-
-		# Remove anything thats not a word
-		for reg in region:
-			if cv2.contourArea(reg) > 1000:
-				cv2.drawContours(ROI, [reg], -1, 0, -1)
-
-		# Invert the image
-		ROI = cv2.bitwise_not(ROI)
-
-		# Read the text
-		moves = pytesseract.image_to_string(ROI).split("\n")
-
-		# Remove empty strings
-		moves = list(filter(None, moves))
-
-		# Assign moves to variables
-		if len(moves) is 3:
-			self.FTM = moves[0].replace('-',' ')
-			self.CTM1 = moves[1].replace('-',' ')
-			self.CTM2 = moves[2].replace('-',' ')
-		elif len(moves) is 2:
-			self.FTM = moves[0].replace('-',' ')
-			self.CTM1 = moves[1].replace('-',' ')
 
 	def resetVariables(self):
 		# Reset variables to None so errors can be regonized
@@ -239,79 +165,39 @@ class getData:
 		self.IV = None
 
 		self.isLucky = None
-		self.candyCount = None
 
-		self.FTM = None
-		self.CTM1 = None
-		self.CTM2 = None
-
-		self.ID = None
-
-	def logDataA(self, fileName, printFlag, csvFlag):
+	def loadImageData(self, fileName, printFlag, csvFlag):
 		# Storage variable
 		tempData = []
 
-		# Load all *.PNG files in dataA directory
-		for filePath in glob.iglob('dataA/*.PNG'):
-			# Load image
-			self.loadImage(filePath)
-
-			# Get the data
-			self.getLuckyCandy()
-			self.getCP()
-			self.getID()
-			self.getMoves()
-
-			# Print
-			if printFlag is True:
-				print('ID:\t', self.ID)
-				print(self.isLucky, self.candyCount)
-				print(self.FTM, self.CTM1, self.CTM2)
-
-			# Save the data to temp list and reset
-			tempData.append([self.ID, self.isLucky, self.candyCount, self.FTM,
-							 self.CTM1, self.CTM2])
-			self.resetVariables()
-
-		# Write data to CSV and display to user
-		if csvFlag is True:
-			df = pd.DataFrame(tempData, columns=['ID', 'Lucky', 'Candy Count',
-				'Fast Attack', 'Charge Attack 1', 'Charge Attack 2'])
-
-			df.to_csv(fileName, index=None, header=True)
-			print('\nFile saved to:\t' + fileName + '\n\n\n')
-
-	def logDataB(self, fileName, printFlag, csvFlag):
-		# Storage variable
-		tempData = []
-
-		# Load all *.PNG files in dataB directory
-		for filePath in glob.iglob('dataB/*.PNG'):
+		# Load all *.PNG files in specified directory
+		# for filePath in glob.iglob('screenShots/*.PNG'):
+		for filePath in glob.iglob('error/*.PNG'):
 			# Load image
 			self.loadImage(filePath)
 
 			# Get the data
 			self.getSpecieDateLocation()
 			self.getCP()
-			self.getID()
+			self.luck()
 			self.getStats()
 
 			# Print
 			if printFlag is True:
-				print('ID:\t', self.ID)
 				print(self.specie, self.CP)
 				print(self.ATK, self.DEF, self.STA, '->', self.IV)
-				print(self.catchDate, self.location, '\n')
+				print(self.catchDate, self.location, self.isLucky, '\n')
 
 			# Save the data to temp list and reset
-			tempData.append([self.ID, self.specie, self.CP, self.ATK, self.DEF,
-							 self.STA, self.IV, self.catchDate, self.location])
+			tempData.append([self.specie, self.CP, self.ATK, self.DEF, self.STA,
+							 self.IV, self.catchDate, self.location, self.isLucky])
 			self.resetVariables()
 
-		# Write data to CSV and display to user
+		# Write data to CSV and display file name to user
 		if csvFlag is True:
-			df = pd.DataFrame(tempData, columns=['ID', 'Specie', 'CP', 'ATK_IV',
-				'DEF_IV', 'STA_IV', 'Percent IV', 'Catch Date', 'Catch Location'])
+			df = pd.DataFrame(tempData, columns=['Specie', 'CP', 'ATK_IV', 'DEF_IV',
+												 'STA_IV', 'Percent IV', 'Catch Date',
+												 'Catch Location', 'Lucky'])
 
 			df.to_csv(fileName, index=None, header=True)
 			print('\nFile saved to:\t' + fileName + '\n\n\n')
@@ -553,18 +439,18 @@ class calculateData:
 		print('\nFile saved to:\t' + fileName + '\n')
 
 def main():
-	G = getData()
+	G = getImgData()
 	C = calculateData()
 
 	# Start time
 	startTime = time.time()
 
 	# Log data -> Filename, printFlag, csvFlag
-	G.logDataA('dataA.csv', True, True)
-	G.logDataB('dataB.csv', True, True)
+	G.loadImageData('imgData.csv', True, False)
+
 
 	# Load data -> FileA, FileB, gameMasterFile, file2save
-	C.exportData('dataA.csv', 'dataB.csv', 'GAME_MASTER.json', 'MASTER.csv')
+	# C.exportData('dataA.csv', 'dataB.csv', 'GAME_MASTER.json', 'MASTER.csv')
 
 	# Time elapsed
 	print('Time elapsed: ', time.time() - startTime)
