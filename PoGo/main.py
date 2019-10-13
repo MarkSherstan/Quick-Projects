@@ -38,14 +38,19 @@ class getImgData:
 
 	def getSpecieDateLocation(self):
 		# img[y1:y2, x1:x2]
-		ROI = self.GRAY[2200:2400, 45:1080]
+		ROI = self.GRAY[2100:2400, 45:1080]
 
 		# OCR the block of text
 		sentance = pytesseract.image_to_string(ROI).split()
 
 		# Split out the sentance to extract components
-		self.specie = sentance[1]
-		self.catchDate = sentance[5]
+		spec = sentance[1:(sentance.index("was"))]
+		temp = ''
+		for word in spec:
+			temp += word
+		self.specie = temp.replace("'", "").replace('.','_')
+
+		self.catchDate = ''.join(sentance[(sentance.index("on")+1):(sentance.index("on")+2)])
 
 		loc = sentance[(sentance.index("around")+1):len(sentance)]
 		temp = ''
@@ -165,9 +170,10 @@ class getImgData:
 
 		self.isLucky = None
 
-	def loadImageData(self, fileName, printFlag, csvFlag):
+	def loadImageData(self, fileName):
 		# Storage variable
 		tempData = []
+		errorList = []
 
 		# Load all *.PNG files in specified directory
 		for filePath in glob.iglob('screenShots/*.PNG'):
@@ -175,10 +181,14 @@ class getImgData:
 			self.loadImage(filePath)
 
 			# Get the data
-			self.getSpecieDateLocation()
-			self.getCP()
-			self.luck()
-			self.getStats()
+			try:
+				self.getSpecieDateLocation()
+				self.getCP()
+				self.luck()
+				self.getStats()
+			except:
+				self.resetVariables()
+				errorList.append(filePath)
 
 			# Print
 			print(self.specie, self.CP)
@@ -196,7 +206,8 @@ class getImgData:
 											 'Catch Location', 'Lucky'])
 
 		df.to_csv(fileName, index=None, header=True)
-		print('\nFile saved to:\t' + fileName + '\n\n\n')
+		print('\n\n\n\nFile saved to:\t' + fileName)
+		print('Errors in file: ', errorList)
 
 class processData:
 	def __init__(self):
@@ -290,30 +301,33 @@ class processData:
 		defBaseList = []
 		staBaseList = []
 
-		for ii in range(self.MASTER.shape[0]):
-			# Get value from json
-			str = self.MASTER['Specie'][ii]
-			row = self.gameData.index[self.gameData['Name'] == str.upper()][0]
+		try:
+			for ii in range(self.MASTER.shape[0]):
+				# Get value from json
+				str = self.MASTER['Specie'][ii]
+				row = self.gameData.index[self.gameData['Name'] == str.upper()][0]
 
-			Base_Attack = self.gameData['baseAttack'][row]
-			Base_Defense = self.gameData['baseDefense'][row]
-			Base_Stamina = self.gameData['baseStamina'][row]
+				Base_Attack = self.gameData['baseAttack'][row]
+				Base_Defense = self.gameData['baseDefense'][row]
+				Base_Stamina = self.gameData['baseStamina'][row]
 
-			# Find CP multiplier
-			CP_Multiplier = math.sqrt((10 * self.MASTER['CP'][ii]) /
-							((Base_Attack + self.MASTER['ATK_IV'][ii]) *
-							(Base_Defense + self.MASTER['DEF_IV'][ii])**0.5 *
-							(Base_Stamina + self.MASTER['STA_IV'][ii])**0.5))
+				# Find CP multiplier
+				CP_Multiplier = math.sqrt((10 * self.MASTER['CP'][ii]) /
+								((Base_Attack + self.MASTER['ATK_IV'][ii]) *
+								(Base_Defense + self.MASTER['DEF_IV'][ii])**0.5 *
+								(Base_Stamina + self.MASTER['STA_IV'][ii])**0.5))
 
-			# Reverse CP multiplier to find level
-			levelList.append(self.halfRound(np.interp(CP_Multiplier, self.CPM,
-							 np.arange(1, 40.5, 0.5).tolist())))
-			CPMList.append(round(CP_Multiplier, 5))
+				# Reverse CP multiplier to find level
+				levelList.append(self.halfRound(np.interp(CP_Multiplier, self.CPM,
+								 np.arange(1, 40.5, 0.5).tolist())))
+				CPMList.append(round(CP_Multiplier, 5))
 
-			# Append lists for base stats
-			atkBaseList.append(Base_Attack)
-			defBaseList.append(Base_Defense)
-			staBaseList.append(Base_Stamina)
+				# Append lists for base stats
+				atkBaseList.append(Base_Attack)
+				defBaseList.append(Base_Defense)
+				staBaseList.append(Base_Stamina)
+		except:
+			print(self.MASTER['Specie'][ii])
 
 		# Add to data frame
 		self.MASTER['Level'] = levelList
