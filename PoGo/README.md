@@ -1,4 +1,4 @@
-#PoGo
+# PoGo
 Playing around with OpenCV, tesseract, and JSON files to make a spreadsheet for Pokemon Go.
 
 ## Comments
