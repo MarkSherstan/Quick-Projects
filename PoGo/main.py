@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import pytesseract
 import imutils
-import time
 import math
 import glob
 import json
@@ -182,10 +181,9 @@ class getImgData:
 			self.getStats()
 
 			# Print
-			if printFlag is True:
-				print(self.specie, self.CP)
-				print(self.ATK, self.DEF, self.STA, '->', self.IV)
-				print(self.catchDate, self.location, self.isLucky, '\n')
+			print(self.specie, self.CP)
+			print(self.ATK, self.DEF, self.STA, '->', self.IV)
+			print(self.catchDate, self.location, self.isLucky, '\n')
 
 			# Save the data to temp list and reset
 			tempData.append([self.specie, self.CP, self.ATK, self.DEF, self.STA,
@@ -193,13 +191,12 @@ class getImgData:
 			self.resetVariables()
 
 		# Write data to CSV and display file name to user
-		if csvFlag is True:
-			df = pd.DataFrame(tempData, columns=['Specie', 'CP', 'ATK_IV', 'DEF_IV',
-												 'STA_IV', 'Percent IV', 'Catch Date',
-												 'Catch Location', 'Lucky'])
+		df = pd.DataFrame(tempData, columns=['Specie', 'CP', 'ATK_IV', 'DEF_IV',
+											 'STA_IV', 'Percent IV', 'Catch Date',
+											 'Catch Location', 'Lucky'])
 
-			df.to_csv(fileName, index=None, header=True)
-			print('\nFile saved to:\t' + fileName + '\n\n\n')
+		df.to_csv(fileName, index=None, header=True)
+		print('\nFile saved to:\t' + fileName + '\n\n\n')
 
 class processData:
 	def __init__(self):
@@ -288,6 +285,7 @@ class processData:
 	def levelAndBaseStats(self):
 		# Create list for writing
 		levelList = []
+		CPMList = []
 		atkBaseList = []
 		defBaseList = []
 		staBaseList = []
@@ -310,6 +308,7 @@ class processData:
 			# Reverse CP multiplier to find level
 			levelList.append(self.halfRound(np.interp(CP_Multiplier, self.CPM,
 							 np.arange(1, 40.5, 0.5).tolist())))
+			CPMList.append(round(CP_Multiplier, 5))
 
 			# Append lists for base stats
 			atkBaseList.append(Base_Attack)
@@ -318,6 +317,7 @@ class processData:
 
 		# Add to data frame
 		self.MASTER['Level'] = levelList
+		self.MASTER['CPM'] = CPMList
 		self.MASTER['ATK_Base'] = atkBaseList
 		self.MASTER['DEF_Base'] = defBaseList
 		self.MASTER['STA_Base'] = staBaseList
@@ -343,39 +343,47 @@ class processData:
 		self.MASTER['type'] = type
 		self.MASTER['type2'] = type2
 
+	def comparisonData(self):
+		# Level 40 perfect IV CP value
+		self.MASTER['Perfect CP'] = (round(((self.MASTER.ATK_Base + 15) *
+									 	(self.MASTER.DEF_Base + 15)**0.5 *
+									 	(self.MASTER.STA_Base + 15)**0.5 *
+									 	(0.7903)**2) / 10)).astype('Int64')
+
+		# Current ATK, DEF, HP based on level
+		self.MASTER['ATK_Current'] = (round((self.MASTER.ATK_Base + self.MASTER.ATK_IV) * self.MASTER.CPM)).astype('Int64')
+		self.MASTER['DEF_Current'] = (round((self.MASTER.DEF_Base + self.MASTER.DEF_IV) * self.MASTER.CPM)).astype('Int64')
+		self.MASTER['STA_Current'] = (round((self.MASTER.STA_Base + self.MASTER.STA_IV) * self.MASTER.CPM)).astype('Int64')
+
 	def exportData(self, imgDataFilePath, JSON, exportFilePath):
 		# Run all the processing
 		self.loadImgData(imgDataFilePath)
 		self.loadJsonData(JSON)
 		self.levelAndBaseStats()
 		self.numberAndTypes()
+		self.comparisonData()
 
-		# Rearrange columns and reset the index
-		self.MASTER = self.MASTER[['Pokedex Number', 'Specie', 'CP', 'type',
-			'type2', 'ATK_IV', 'DEF_IV', 'STA_IV', 'Percent IV',
-			'ATK_Base', 'DEF_Base', 'STA_Base', 'Level',
+		# Rearrange columns
+		self.MASTER = self.MASTER[['Pokedex Number', 'Specie', 'CP', 'type', 'type2',
+			'ATK_IV', 'DEF_IV', 'STA_IV', 'Percent IV', 'Level', 'CPM', 'Perfect CP',
+			'ATK_Current', 'DEF_Current', 'STA_Current',
+			'ATK_Base', 'DEF_Base', 'STA_Base',
 			'Lucky', 'Catch Date', 'Catch Location']]
-		self.MASTER.set_index('Pokedex Number')
 
 		# Save to file
 		self.MASTER.to_csv(exportFilePath)
 		print('\nFile saved to:\t' + exportFilePath + '\n')
 
 def main():
+	# Set up classes
 	G = getImgData()
 	P = processData()
 
-	# Start time
-	startTime = time.time()
+	# Ensure images are in 'screenShots' folder. Specify file name
+	G.loadImageData('imgData.csv')
 
-	# Log data -> Filename, printFlag, csvFlag
-	# G.loadImageData('imgData.csv', True, True)
-
-	# Load data -> FileA, FileB, gameMasterFile, file2save
+	# Load saved file imageData.csv, gameMasterFile.json and specify new file name file2save.csv
 	P.exportData('imgData.csv', 'GAME_MASTER.json', 'MASTER.csv')
-
-	# Time elapsed
-	print('Time elapsed: ', time.time() - startTime)
 
 # Main loop
 if __name__ == '__main__':
