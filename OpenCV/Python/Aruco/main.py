@@ -1,16 +1,17 @@
 import numpy as np
+import pickles
+import glob
 import cv2
 import cv2.aruco as aruco
-import glob
-import time
-import pickles
-
 
 class ARUCO_CLAW:
     def __init__(self, arucoDict=aruco.DICT_6X6_250):
         self.arucoDict = aruco.Dictionary_get(arucoDict)
         self.frameWidth = 1280
         self.frameHeight = 720
+
+        self.mtx = None
+        self.dist = None
 
         self.calibrationDir = 'calibration/'
         self.imgExtension = '.jpg'
@@ -136,18 +137,72 @@ class ARUCO_CLAW:
         pickle.dump((mtx, dist), f)
         f.close()
 
-    def getCalibration(self, calFile):
+    def getCalibration(self):
         # Open file, retrieve variables, and close
-        file = open(calFile, 'rb')
+        file = open('calibration.pckl', 'rb')
         self.mtx, self.dist = pickle.load(file)
         file.close()
 
+    def trackAruco(self):
+        # Get calibration data
+        try:
+            self.getCalibration()
+        except:
+            print('Calibration not found!')
+
+        # Start webcam
+        cam = cv2.VideoCapture(1)
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.frameWidth)
+        cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameHeight)
+
+        # Set parameters
+        parameters = aruco.DetectorParameters_create()
+        parameters.adaptiveThreshConstant = 10
+
+        while(True):
+            # Get frame and convert to gray
+            _, frame = cam.read()
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # lists of ids and corners belonging to each id
+            corners, ids, _ = aruco.detectMarkers(gray, self.arucoDict, parameters=parameters)
+
+            # Only continue if a marker was found
+            if np.all(ids != None):
+                # Estimate the pose
+                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, 0.05, self.mtx, self.dist)
+
+                # Draw axis for each aruco marker found
+                for ii in range(0, ids.size):
+                    aruco.drawAxis(frame, self.mtx, self.dist, rvec[ii], tvec[ii], 0.1)
+
+                # Draw square around markers
+                aruco.drawDetectedMarkers(frame, corners)
+
+                # Print marker ID found
+                for ii in range(0, ids.size):
+                    print(ids[ii][0]),
+
+            # display the resulting frame
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # When complete close everything down
+        cap.release()
+        cv2.destroyAllWindows()
 
 def main():
-    # Set up class
     ac = ARUCO_CLAW(aruco.DICT_5X5_1000)
 
-    # ac.generateMarker()
+    ac.generateMarker(ID=7)
+    ac.generateMarker(ID=13)
+
+    ac.captureCalibrationImages()
+
+    ac.calibrateCamera()
+
+    ac.trackAruco()
 
 
 # Main loop
