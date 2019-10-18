@@ -3,74 +3,69 @@ import cv2
 import cv2.aruco as aruco
 import glob
 import time
+import pickles
 
 
-class A:
-    def __init__(self):
-        self.
+class ARUCO_CLAW:
+    def __init__(self, arucoDict=aruco.DICT_6X6_250):
+        self.arucoDict = aruco.Dictionary_get(arucoDict)
+        self.frameWidth = 1280
+        self.frameHeight = 720
 
-    def createGrid(self):
+        self.calibrationDir = 'calibration/'
+        self.imgExtension = '.jpg'
 
+    def generateMarker(self, ID=7, size=700):
+        # Create an image from the marker
+        img = aruco.drawMarker(self.arucoDict, ID, size)
 
+        # Save and display (press any key to exit)
+        cv2.imwrite('ARUCO_'+str(ID)+'.png', img)
+        cv2.imshow('Marker ID: ' + str(ID), img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
+    def captureCalibrationImages(self):
+        # Initialize snapshot counter
+        index = 0
 
-# Define some variables
-index = 0
-directory = 'calibration/'
-fileName = 'IMG_'
-fileExtension = '.jpg'
+        # Start webcam
+        cam = cv2.VideoCapture(1)
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.frameWidth)
+        cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameHeight)
 
-# Required to communicate with USB webcam. Set some parameters
-# https://docs.opencv.org/3.4/d4/d15/group__videoio__flags__base.html
-# Changed in the app (Camera settings)
-# Disabled auto focus and auto white
-cam = cv2.VideoCapture(1)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        while(True):
+            # Get frame and show
+            _, frame = cam.read()
+            cv2.imshow('Frame', frame)
 
-while(True):
-    # Get frame and show
-    _, frame = cam.read()
-    cv2.imshow('Frame', frame)
+            # Check keyboard commands
+            #   'space' -> Snapshot
+            #   'q' -> Quit
+            key = cv2.waitKey(1)
 
-    # Check keyboard commands
-    #   'space' -> Snapshot
-    #   'q' -> Quit
-    key = cv2.waitKey(1)
+            if key != -1:
+                if key & 0xFF == ord(' '):
+                    indexedFile = self.calibrationDir + 'IMG_' + str(index) + self.imgExtension
+                    print(indexedFile)
+                    cv2.imwrite(indexedFile, frame)
+                    index += 1
+                elif key & 0xFF == ord('q'):
+                    break
 
-    if key != -1:
-        if key & 0xFF == ord(' '):
-            indexedFile = directory + fileName + str(index) + fileExtension
-            print(indexedFile)
-            cv2.imwrite(indexedFile, frame)
-            index += 1
-        elif key & 0xFF == ord('q'):
-            break
+        # Clear connections and window
+        cam.release()
+        cv2.destroyAllWindows()
 
-# Clear connections and window
-cam.release()
-cv2.destroyAllWindows()
-
+    def calibrateData(self):
 
 
 def main():
     # Set up class
-    gyro = 250      # 250, 500, 1000, 2000 [deg/s]
-    acc = 2         # 2, 4, 7, 16 [g]
-    tau = 0.98
-    mpu = MPU(gyro, acc, tau)
+    ac = ARUCO_CLAW(aruco.DICT_5X5_1000)
 
-    # Set up sensor and calibrate gyro with N points
-    mpu.setUp()
-    mpu.calibrateGyro(500)
+    # ac.generateMarker()
 
-    # Run for 20 secounds
-    startTime = time.time()
-    while(time.time() < (startTime + 20)):
-        mpu.compFilter()
-
-    # End
-    print("Closing")
 
 # Main loop
 if __name__ == '__main__':
