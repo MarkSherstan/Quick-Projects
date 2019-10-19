@@ -156,7 +156,7 @@ class ARUCOCLAW:
         fontColor = (0, 255, 0)
 
         # Start webcam
-        cam = cv2.VideoCapture(1)
+        cam = cv2.VideoCapture(0)
         cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.frameWidth)
         cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameHeight)
 
@@ -204,7 +204,7 @@ class ARUCOCLAW:
         cam.release()
         cv2.destroyAllWindows()
 
-    def blockManipulator(self, serialPort='/dev/cu.usbmodem14101'):
+    def blockManipulator(self, serialPort='/dev/cu.usbmodem14201'):
         # Get calibration data
         try:
             self.getCalibration()
@@ -215,7 +215,7 @@ class ARUCOCLAW:
         font = cv2.FONT_HERSHEY_SIMPLEX
 
         # Start webcam
-        cam = cv2.VideoCapture(1)
+        cam = cv2.VideoCapture(0)
         cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.frameWidth)
         cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frameHeight)
 
@@ -254,7 +254,7 @@ class ARUCOCLAW:
                     z = round(tvec[0][0][2]*100,1)
 
                     # Grab
-                    if (idz == '21'):
+                    if ((idz == '21') or (idz == '97')):
                         fontColor = (0, 255, 0)
                         cv2.putText(frame, "ID: " + idz, (0, 30), font, 1, fontColor, 2)
                         cv2.putText(frame, "X " + str(x), (0, 60), font, 1, fontColor, 2)
@@ -264,9 +264,8 @@ class ARUCOCLAW:
                         if ((abs(x) < 2) and (abs(y) < 2) and (28 <= z <= 32)):
                             ser.write(chr(0x68))
                             cv2.putText(frame, "Grabbing item!", (1000, 30), font, 1, (0, 0, 0), 2)
-
                     # Dont grab
-                    elif (idz == '13'):
+                    elif ((idz == '15') or (idz == '13')):
                         fontColor = (0, 0, 255)
                         cv2.putText(frame, "ID: " + idz, (0, 30), font, 1, fontColor, 2)
                         cv2.putText(frame, "X " + str(x), (0, 60), font, 1, fontColor, 2)
@@ -291,8 +290,8 @@ class ARUCOCLAW:
 def main():
     ac = ARUCOCLAW(aruco.DICT_5X5_1000)
 
-    # ac.generateMarker(ID=7, size=90)
-    # ac.generateMarker(ID=21, size=90)
+    # ac.generateMarker(ID=97, size=90)
+    # ac.generateMarker(ID=35, size=500)
 
     # ac.captureCalibrationImages()
 
