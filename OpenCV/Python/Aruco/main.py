@@ -204,7 +204,7 @@ class ARUCOCLAW:
         cam.release()
         cv2.destroyAllWindows()
 
-    def blockManipulator(self, serialPort='/dev/cu.usbmodem14201'):
+    def blockManipulator(self, serialPort='/dev/cu.usbmodem14101'):
         # Get calibration data
         try:
             self.getCalibration()
@@ -246,8 +246,6 @@ class ARUCOCLAW:
                 # Draw square around markers
                 aruco.drawDetectedMarkers(frame, corners)
 
-                # print(ids, type(ids), ids.size)
-
                 # Look at IDs found
                 if (ids.size is 1):
                     idz = str(ids[0][0])
@@ -258,29 +256,37 @@ class ARUCOCLAW:
                     # Grab
                     if (idz == '21'):
                         fontColor = (0, 255, 0)
-                        cv2.putText(frame, "ID: " + idz, (0, 25), font, 1, fontColor, 2)
-                        cv2.putText(frame, "X " + str(x), (0, 50), font, 1, fontColor, 2)
-                        cv2.putText(frame, "Y " + str(y), (0, 75), font, 1, fontColor, 2)
-                        cv2.putText(frame, "Z " + str(z), (0, 100), font, 1, fontColor, 2)
+                        cv2.putText(frame, "ID: " + idz, (0, 30), font, 1, fontColor, 2)
+                        cv2.putText(frame, "X " + str(x), (0, 60), font, 1, fontColor, 2)
+                        cv2.putText(frame, "Y " + str(y), (0, 90), font, 1, fontColor, 2)
+                        cv2.putText(frame, "Z " + str(z), (0, 120), font, 1, fontColor, 2)
 
-                        if ((abs(x) < 2) and (abs(y) < 2) and (12 <= z <= 16)):
+                        if ((abs(x) < 2) and (abs(y) < 2) and (28 <= z <= 32)):
                             ser.write(chr(0x68))
-                            cv2.putText(frame, "Grabbing item!", (0, 700), font, 1, (0, 0, 0), 2)
+                            cv2.putText(frame, "Grabbing item!", (1000, 30), font, 1, (0, 0, 0), 2)
 
                     # Dont grab
                     elif (idz == '13'):
                         fontColor = (0, 0, 255)
-                        cv2.putText(frame, "ID: " + idz, (0, 25), font, 1, fontColor, 2)
-                        cv2.putText(frame, "X " + str(x), (0, 50), font, 1, fontColor, 2)
-                        cv2.putText(frame, "Y " + str(y), (0, 75), font, 1, fontColor, 2)
-                        cv2.putText(frame, "Z " + str(z), (0, 100), font, 1, fontColor, 2)
+                        cv2.putText(frame, "ID: " + idz, (0, 30), font, 1, fontColor, 2)
+                        cv2.putText(frame, "X " + str(x), (0, 60), font, 1, fontColor, 2)
+                        cv2.putText(frame, "Y " + str(y), (0, 90), font, 1, fontColor, 2)
+                        cv2.putText(frame, "Z " + str(z), (0, 120), font, 1, fontColor, 2)
                 else:
                     cv2.putText(frame, "To many objects", (0, 25), font, 1, (0, 0, 0), 2)
 
             # display the resulting frame
             cv2.imshow('frame', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+
+            # Either quit (q) or reset the claw (' ' -> Spacebar)
+            key = cv2.waitKey(1)
+
+            if key != -1:
+                if key & 0xFF == ord(' '):
+                    ser.write(chr(0x14))
+                    print('Reset gripper')
+                elif key & 0xFF == ord('q'):
+                    break
 
 def main():
     ac = ARUCOCLAW(aruco.DICT_5X5_1000)
