@@ -1,10 +1,10 @@
 import numpy as np
-import pickles
+import pickle
 import glob
 import cv2
 import cv2.aruco as aruco
 
-class ARUCO_CLAW:
+class ARUCOCLAW:
     def __init__(self, arucoDict=aruco.DICT_6X6_250):
         self.arucoDict = aruco.Dictionary_get(arucoDict)
         self.frameWidth = 1280
@@ -106,7 +106,7 @@ class ARUCO_CLAW:
                     imageSize = gray.shape[::-1]
 
                 # Draw and display the calibration. Wait for user to smash a key before moving on
-                img = cv2.drawChessboardCorners(gray, (rowCount,colCount), corners2, ret)
+                img = cv2.drawChessboardCorners(img, (rowCount,colCount), corners2, ret)
                 cv2.imshow(filePath, img)
                 cv2.waitKey(0)
             else:
@@ -150,6 +150,10 @@ class ARUCO_CLAW:
         except:
             print('Calibration not found!')
 
+        # Font and color for screen writing
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontColor = (0, 255, 0)
+
         # Start webcam
         cam = cv2.VideoCapture(1)
         cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.frameWidth)
@@ -179,9 +183,16 @@ class ARUCO_CLAW:
                 # Draw square around markers
                 aruco.drawDetectedMarkers(frame, corners)
 
-                # Print marker ID found
+                # Print ids found in top left
+                idz = ''
                 for ii in range(0, ids.size):
-                    print(ids[ii][0]),
+                    idz += str(ids[ii][0])+' '
+                    x = round(tvec[ii][0][0]*100,2)
+                    y = round(tvec[ii][0][1]*100,2)
+                    z = round(tvec[ii][0][2]*100,2)
+                    print(x,y,z)
+
+                cv2.putText(frame, "ID: " + idz, (0, 50), font, 1, fontColor, 2)
 
             # display the resulting frame
             cv2.imshow('frame', frame)
@@ -189,21 +200,23 @@ class ARUCO_CLAW:
                 break
 
         # When complete close everything down
-        cap.release()
+        cam.release()
         cv2.destroyAllWindows()
 
 def main():
-    ac = ARUCO_CLAW(aruco.DICT_5X5_1000)
+    ac = ARUCOCLAW(aruco.DICT_5X5_1000)
 
-    ac.generateMarker(ID=7)
-    ac.generateMarker(ID=13)
+    # ac.generateMarker(ID=7, size=90)
+    # ac.generateMarker(ID=21, size=90)
 
-    ac.captureCalibrationImages()
+    # ac.captureCalibrationImages()
 
-    ac.calibrateCamera()
+    # ac.calibrateCamera()
+    # ac.getCalibration()
+    # print(ac.mtx)
+    # print(ac.dist)
 
-    ac.trackAruco()
-
+    # ac.trackAruco()
 
 # Main loop
 if __name__ == '__main__':
