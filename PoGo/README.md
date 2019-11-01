@@ -35,8 +35,6 @@ Look at the `exampleData` folder for more information.
 ## To do
 * Clean up the spaghetti -> Make some nicer sub functions (e.g. - send ROI and return string)
 * Add arguments in command line vs hardcoded (argparse) -> fileNames
-* Fix error handling -> Manual input prompt?
-* Black image sometimes appearing when CP error recognized
 * Look at json parsing, OCR, and image processing in Swift
 
 ## Links

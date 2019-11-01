@@ -82,18 +82,27 @@ class getImgData:
 			# Convert CP to int
 			self.CP = int(self.CP)
 
-			# If CP is impossibly high, get input from user
-			if self.CP > 5000:
+			# If CP is impossibly high or low, get input from user
+			if not (2000 <= self.CP <= 4000):
 				cv2.imshow('ERROR', self.BGR[120:230, 340:730])
-				cv2.waitKey(1)
+				cv2.waitKey(1000)
 				self.CP = int(input("Input CP: "))
-				cv2.destroyAllWindows()
+
+				# Fix black screen bug
+				for ii in range (1,10):
+					cv2.destroyAllWindows()
+					cv2.waitKey(10)
+
 		except:
 			# If int conversion went wrong get input from user
 			cv2.imshow('ERROR', self.BGR[120:230, 340:730])
-			cv2.waitKey(1)
+			cv2.waitKey(1000)
 			self.CP = int(input("Input CP: "))
-			cv2.destroyAllWindows()
+
+			# Fix black screen bug
+			for ii in range (1,10):
+				cv2.destroyAllWindows()
+				cv2.waitKey(10)
 
 	def getStats(self):
 		# Cropping coordinates
@@ -354,8 +363,9 @@ class processData:
 
 		# save to dataframe
 		self.MASTER['Pokedex Number'] = pokedexNum
-		self.MASTER['type'] = type
-		self.MASTER['type2'] = type2
+		self.MASTER['typeA'] = type
+		self.MASTER['typeB'] = type2
+		self.MASTER['types'] = self.MASTER['typeA']+'-'+self.MASTER['typeB']
 
 	def comparisonData(self):
 		# Level 40 perfect IV CP value
@@ -378,8 +388,8 @@ class processData:
 		self.comparisonData()
 
 		# Rearrange columns
-		self.MASTER = self.MASTER[['Pokedex Number', 'Specie', 'CP', 'type', 'type2',
-			'ATK_IV', 'DEF_IV', 'STA_IV', 'Percent IV', 'Level', 'CPM', 'Perfect CP',
+		self.MASTER = self.MASTER[['Pokedex Number', 'Specie', 'CP', 'typeA', 'typeB',
+			'types', 'ATK_IV', 'DEF_IV', 'STA_IV', 'Percent IV', 'Level', 'CPM', 'Perfect CP',
 			'ATK_Current', 'DEF_Current', 'STA_Current',
 			'ATK_Base', 'DEF_Base', 'STA_Base',
 			'Lucky', 'Catch Date', 'Catch Location']]
