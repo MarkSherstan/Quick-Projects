@@ -1,4 +1,5 @@
 import numpy as np
+import datetime
 import serial
 import pickle
 import glob
@@ -204,12 +205,19 @@ class ARUCOCLAW:
         cam.release()
         cv2.destroyAllWindows()
 
-    def blockManipulator(self, serialPort='/dev/cu.usbmodem14201'):
+    def blockManipulator(self, serialPort='/dev/cu.usbmodem14201', rec=False):
         # Get calibration data
         try:
             self.getCalibration()
         except:
             print('Calibration not found!')
+
+        # Prepare the video recorder
+        if rec is True:
+            now = datetime.datetime.now()
+            timeStamp = now.strftime("%Y-%m-%d_%H.%M.%S") + ".avi"
+
+            out = cv2.VideoWriter(timeStamp, cv2.VideoWriter_fourcc('M','J','P','G'), 30, (self.frameWidth, self.frameHeight))
 
         # Font for screen writing
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -261,9 +269,9 @@ class ARUCOCLAW:
                         cv2.putText(frame, "Y " + str(y), (0, 90), font, 1, fontColor, 2)
                         cv2.putText(frame, "Z " + str(z), (0, 120), font, 1, fontColor, 2)
 
-                        if ((abs(x) < 2) and (abs(y) < 2) and (28 <= z <= 32)):
+                        if ((abs(x) < 3) and (abs(y) < 3) and (18 <= z <= 22)):
                             ser.write(chr(0x68))
-                            cv2.putText(frame, "Grabbing item!", (1000, 30), font, 1, (0, 0, 0), 2)
+                            # cv2.putText(frame, "Grabbing item!", (1000, 30), font, 1, (0, 0, 0), 2)
                     # Dont grab
                     elif ((idz == '15') or (idz == '13')):
                         fontColor = (0, 0, 255)
@@ -277,6 +285,9 @@ class ARUCOCLAW:
             # display the resulting frame
             cv2.imshow('frame', frame)
 
+            if rec is True:
+                out.write(frame)
+
             # Either quit (q) or reset the claw (' ' -> Spacebar)
             key = cv2.waitKey(1)
 
@@ -285,6 +296,10 @@ class ARUCOCLAW:
                     ser.write(chr(0x14))
                     print('Reset gripper')
                 elif key & 0xFF == ord('q'):
+                    if rec is True:
+                        out.release()
+                    cam.release()
+                    cv2.destroyAllWindows()
                     break
 
 def main():
@@ -301,7 +316,7 @@ def main():
     # print(ac.dist)
 
     # ac.trackAruco()
-    ac.blockManipulator()
+    ac.blockManipulator(rec=True)
 
 # Main loop
 if __name__ == '__main__':
