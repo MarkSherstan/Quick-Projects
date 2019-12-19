@@ -16,7 +16,7 @@ startTimer = toc;
 % Get data for 15 seconds
 while (toc < startTimer+15)
 
-  % Perform the header checks and get cast bytes to ints
+  % Perform the header checks and cast bytes to ints
   if (fread(s, 1) == 159)
       if (fread(s, 1) == 110)
           x = fread(s, 2);
@@ -35,7 +35,7 @@ end
 endTimer = toc;
 fprintf("Sample rate was: %0.2f Hz\n", count/(endTimer - startTimer))
 
-% Remove serial port connection
+% Close serial port connection
 fclose(s);
 delete(s)
 clear s

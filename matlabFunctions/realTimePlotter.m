@@ -4,7 +4,7 @@ function [] = realTimePlotter()
   h = animatedline;
   ax = gca;
   ax.YLim = [0 5];
-  xlabel('Time (s)')
+  xlabel('Time [s]')
   ylabel('Output Y [units]')
 
   % Start a timer
@@ -28,5 +28,5 @@ function [] = realTimePlotter()
         ax.XLim = [t-5 t+5];
         drawnow
     end
-
   end
+end

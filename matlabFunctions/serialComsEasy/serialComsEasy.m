@@ -9,9 +9,9 @@ count = 0;
 tic
 startTimer = toc;
 
-% Get data for 5 seconds
-while (toc < startTimer+5)
-  % Send character and receive data
+% Get data for 15 seconds
+while (toc < startTimer+15)
+  % Send character and receive data (handshake protocal)
   fprintf(s, "a");
   out = fscanf(s, '%d\n');
 
@@ -26,7 +26,7 @@ end
 endTimer = toc;
 fprintf("Sample rate was: %0.2f Hz\n",count/(endTimer - startTimer))
 
-% Remove serial port connection
+% Remove/close serial port connection
 fclose(s);
 delete(s)
 clear s
