@@ -1,6 +1,8 @@
-// Define variables
+// Define pins
 const int trigPin = 9;
 const int echoPin = 10;
+
+// Define variables
 long duration;
 int distance;
 

@@ -1,8 +1,9 @@
+#define laserPin 11
+
 void setup() {
-  pinMode(11, OUTPUT);
-  digitalWrite(11, HIGH);
+  pinMode(laserPin, OUTPUT);
+  digitalWrite(laserPin, HIGH);
 }
 
 void loop() {
-
 }

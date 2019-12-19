@@ -1,21 +1,22 @@
-// From bildr article: http://bildr.org/2012/08/rotary-encoder-arduino/
-// https://www.arduino.cc/en/Reference/AttachInterrupt?setlang=it
+// Based on:
+//    http://bildr.org/2012/08/rotary-encoder-arduino/
+//    https://www.arduino.cc/en/Reference/AttachInterrupt?setlang=it
 
 // Declare some variables
 int encoderPin1 = 2;
 int encoderPin2 = 3;
-int lastMSB = 0; // most significant bit
-int lastLSB = 0; // least significant bit
+int lastMSB = 0;
+int lastLSB = 0;
 long lastencoderValue = 0;
 volatile int lastEncoded = 0;
 volatile long encoderValue = 0;
 
 
 void setup() {
-  Serial.begin (9600);
+  // Start up a serial port
+  Serial.begin(9600);
 
-  // declare pin 2 and 3 as input, turn pullup resistor on and call updateEncoder()
-  // when there is a change
+  // declare input pins, turn pullup resistor on and call updateEncoder() when there is a change
   pinMode(encoderPin1, INPUT);
   pinMode(encoderPin2, INPUT);
   digitalWrite(encoderPin1, HIGH);
@@ -52,5 +53,4 @@ void updateEncoder() {
   } else if (encoderValue <= -80) {
     encoderValue += 80;
   }
-
 }

@@ -1,6 +1,7 @@
 // Constant values
-const float VCC = 4.98;
-const float R_DIV = 10000.0;
+#define analogPin   0
+#define VCC         4.98
+#define R_DIV       10000.0
 
 // Variables
 int fsrADC;
@@ -13,7 +14,7 @@ void setup(){
 
 void loop(){
   // Read analog pin
-  fsrADC = analogRead(A0);
+  fsrADC = analogRead(analogPin);
 
   // Use ADC reading to calculate voltage
   fsrV = fsrADC * VCC / 1023.0;

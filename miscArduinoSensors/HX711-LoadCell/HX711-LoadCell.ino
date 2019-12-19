@@ -36,7 +36,7 @@ void setup(){
   } else if (mode == 1) {
     // Measuring usage notes
     Serial.println("Remove load from apparatus if applicable.");
-    Serial.println("All readings are in grams");
+    Serial.println("All readings are in calibration unit of measurment");
     delay(4000);
   } else {
     // Error usage notes
@@ -90,9 +90,9 @@ void calibration(){
       char temp = Serial.read();
 
       if (temp == '+')
-        calibrationFactor += 5;
+        calibrationFactor += 10;
       else if (temp == '-')
-        calibrationFactor -= 5;
+        calibrationFactor -= 10;
       else if (temp == 'q')
         break;
     }

@@ -1,9 +1,4 @@
-// Operating voltage	5V
-// Temperature measurement range	-55°C to 125°C [-67°F to 257°F]
-// Measurement Accuracy	±0.5°C
-// Use steinhart-hart coeficients for thermistor
-
-// Define variables
+// Define variables using steinhart-hart coeficients for thermistor
 float R1 = 10000;
 float logR2, R2, T;
 float c1 = 0.001125309, c2 = 0.000234711, c3 = 0.0000000856635;

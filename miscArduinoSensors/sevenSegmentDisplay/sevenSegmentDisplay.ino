@@ -18,15 +18,10 @@ byte digits[10][7] = { { 1,1,1,1,1,1,0 },   // = 0
 void setup() {
   Serial.begin(9600);
 
-  // Initialize pins
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(6, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
+  // Initialize pins 2 through 9
+  for (int ii = 2; ii < 10; ii++){
+    pinMode(ii, OUTPUT);
+  }
 }
 
 
