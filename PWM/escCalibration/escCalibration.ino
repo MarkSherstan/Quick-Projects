@@ -1,24 +1,32 @@
 #include <Servo.h>
 
+// Max and min of of ESC
 #define MAX_SIGNAL 2000
 #define MIN_SIGNAL 1000
 
+// Pinout
 #define MOTOR_PIN_1 9
 #define MOTOR_PIN_2 10
 #define MOTOR_PIN_3 11
 #define MOTOR_PIN_4 12
 
-int DELAY = 1000;
+// Var def
+int PULSE = 1000;
+float SPEED;
 
+// Set up the ESC servo classes
 Servo motor1;
 Servo motor2;
 Servo motor3;
 Servo motor4;
 
-void setup() {
-  Serial.begin(9600);
 
-  delay(1000);
+void setup() {
+  // Start serial port and display some messages
+  Serial.begin(9600); delay(1000);
+  Serial.println("##########################################");
+  Serial.println("REMOVE PROPELLERS!!!");
+  Serial.println("##########################################");
   Serial.println("Press any key to start the ESC's");
 
   // Wait for input
@@ -46,7 +54,7 @@ void setup() {
 
   // Send min output and display message
   Serial.println("\n");
-  Serial.print("Sending minimum output: ");Serial.print(MIN_SIGNAL);Serial.println(" us");
+  Serial.print("Sending minimum output: "); Serial.print(MIN_SIGNAL); Serial.println(" us");
 
   motor1.writeMicroseconds(MIN_SIGNAL);
   motor2.writeMicroseconds(MIN_SIGNAL);
@@ -55,29 +63,26 @@ void setup() {
 
   // Instructions to test functionality
   Serial.println("\n");
-  Serial.println("The ESC is calibrated");
+  Serial.println("The ESC(s) are calibrated");
   Serial.println("----");
-  Serial.println("Type a values between 1000 and 2000 and press enter");
-  Serial.println("and the motor will start rotating.");
-  Serial.println("Send 1000 to stop the motor and 2000 for full throttle");
-
+  Serial.print("Type a value between "); Serial.print(MIN_SIGNAL); Serial.print("(min) and "); Serial.print(MAX_SIGNAL); Serial.println("(max) and press enter.");
 }
 
+
 void loop() {
-
+  // Check the serial port
   if (Serial.available() > 0){
-    int DELAY = Serial.parseInt();
+    PULSE = Serial.parseInt();
 
-    if (DELAY > 999) {
-      motor1.writeMicroseconds(DELAY);
-      motor2.writeMicroseconds(DELAY);
-      motor3.writeMicroseconds(DELAY);
-      motor4.writeMicroseconds(DELAY);
-      float SPEED = (DELAY-1000)/10;
-      Serial.print("\n");
-      Serial.println("Motor speed:"); Serial.print("  "); Serial.print(SPEED); Serial.print("%");
+    // If there is data in the serial port write it to the ESC's and display a message
+    if (PULSE > 999) {
+      motor1.writeMicroseconds(PULSE);
+      motor2.writeMicroseconds(PULSE);
+      motor3.writeMicroseconds(PULSE);
+      motor4.writeMicroseconds(PULSE);
+
+      SPEED = (PULSE - MIN_SIGNAL) / 10;
+      Serial.println("\nMotor speed: "); Serial.print(SPEED); Serial.print("%");
     }
-
   }
-
 }
