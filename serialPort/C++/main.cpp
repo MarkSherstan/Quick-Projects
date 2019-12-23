@@ -34,7 +34,6 @@ int main(int argc, const char **argv){
     // Print results
     cout << analogOut << endl;
   }
-
 }
 
 void readData(){
