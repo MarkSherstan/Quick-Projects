@@ -1,0 +1,49 @@
+﻿XPEL INC  (XPEL) CashFlowFlag BALANCE SHEET
+Fiscal year ends in December. USD in millions except per share data.,2010-12,2011-12,2012-12,2013-12,2014-12,2015-12,2016-12,2017-12,2018-12,2019-12
+Assets
+Current assets
+Cash
+Cash and cash equivalents,0,0,1,1,1,3,2,3,4,12
+Total cash,0,0,1,1,1,3,2,3,4,12
+Receivables,0,1,1,1,2,3,5,6,6,7
+Inventories,0,1,2,3,6,7,8,10,11,15
+Deferred income taxes,0,,,,,,,,,
+Prepaid expenses,0,0,0,0,0,1,0,1,1,2
+Other current assets,,,,,,0,0,,,0
+Total current assets,1,2,4,5,10,14,15,20,21,36
+Non-current assets
+"Property, plant and equipment"
+"Gross property, plant and equipment",1,1,1,1,1,2,3,4,6,12
+Accumulated Depreciation,-0,-0,-0,-1,-1,-1,-1,-2,-2,-3
+"Net property, plant and equipment",0,0,0,1,1,1,1,2,3,9
+Goodwill,,,,,1,2,2,2,2,2
+Intangible assets,0,0,0,1,1,2,3,4,4,4
+Deferred income taxes,0,0,0,,0,0,0,0,,
+Total non-current assets,1,1,1,1,2,5,7,9,10,15
+Total assets,2,3,5,6,13,20,22,29,31,52
+Liabilities and stockholders' equity
+Liabilities
+Current liabilities
+Short-term debt,,,,0,1,4,4,3,1,0
+Capital leases,,,,,,,,,,1
+Accounts payable,,,2,2,4,4,6,10,4,7
+Taxes payable,,,,,,0,0,1,1,
+Accrued liabilities,,,,,,,,,1,1
+Deferred revenues,,0,0,0,0,,,,0,1
+Other current liabilities,1,1,,,,,,,1,1
+Total current liabilities,1,1,2,2,5,9,10,14,8,12
+Non-current liabilities
+Long-term debt,,,,,,2,1,1,1,0
+Capital leases,,,,,,,,,,4
+Deferred taxes liabilities,,,,0,,1,1,0,0,1
+Minority interest,,,,,0,-0,-0,-0,-0,-0
+Other long-term liabilities,0,,,,,,,,,
+Total non-current liabilities,0,,,0,0,2,2,1,1,5
+Total liabilities,1,1,2,2,5,11,11,15,10,17
+Stockholders' equity
+Common stock,,,7,7,7,7,7,9,0,0
+Additional paid-in capital,9,9,2,2,2,2,2,2,11,11
+Retained earnings,-8,-7,-6,-4,-1,0,2,4,11,25
+Accumulated other comprehensive income,,,,,-0,-1,-1,-1,-1,-1
+Total stockholders' equity,1,2,3,4,7,8,10,14,21,35
+Total liabilities and stockholders' equity,2,3,5,6,13,20,22,29,31,52

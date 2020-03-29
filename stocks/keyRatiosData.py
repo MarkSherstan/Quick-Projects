@@ -16,7 +16,7 @@ masterDF = pd.DataFrame()
 # Loop through the data directory looking only at .csv files
 for file in glob.iglob('keyRatiosData/*.csv'):
     # Set the stock name
-    stockName = file.replace('data/','').replace(' Key Ratios.csv','')
+    stockName = file.replace('keyRatiosData/','').replace(' Key Ratios.csv','')
 
     # Read current file in data folder and manipulate the dataframe for consistency
     df = pd.read_csv(file, skiprows=[0,1], sep=",", header=0, index_col=0)
