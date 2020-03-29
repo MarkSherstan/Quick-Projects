@@ -14,7 +14,7 @@ USD2CAD = 1/CAD2USD
 masterDF = pd.DataFrame()
 
 # Loop through the data directory looking only at .csv files
-for file in glob.iglob('data/*.csv'):
+for file in glob.iglob('keyRatiosData/*.csv'):
     # Set the stock name
     stockName = file.replace('data/','').replace(' Key Ratios.csv','')
 
@@ -86,4 +86,4 @@ for file in glob.iglob('data/*.csv'):
     masterDF = pd.concat([masterDF, temp])
     
 # Save the data to a csv
-masterDF.to_csv('stocksMerged.csv')
+masterDF.to_csv('keyRatiosDataMerged.csv')
