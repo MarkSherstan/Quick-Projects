@@ -20,7 +20,6 @@ for file in glob.iglob('data/*.csv'):
 
     # Read current file in data folder and manipulate the dataframe for consistency
     df = pd.read_csv(file, skiprows=[0,1], sep=",", header=0, index_col=0)
-    df = df.drop(labels='TTM', axis=1)
     df.columns = range(len(df.columns))
     
     # Pull the data to be analyzed (always in USD)
@@ -33,6 +32,7 @@ for file in glob.iglob('data/*.csv'):
         revenue = df.loc['Revenue USD Mil',:].str.replace(',', '').astype(float)
         netMargin = df.loc['Net Margin %',:].str.replace(',', '').astype(float)
         opCashFlow = df.loc['Operating Cash Flow USD Mil',:].str.replace(',', '').astype(float)
+        shortTermDebt = df.loc['Short-Term Debt',:].str.replace(',', '').astype(float)
         longTermDebt = df.loc['Long-Term Debt',:].str.replace(',', '').astype(float)
         earningsPerShare = df.loc['Earnings Per Share USD',:].str.replace(',', '').astype(float)
         currentAssets = df.loc['Total Current Assets',:].str.replace(',', '').astype(float)
@@ -47,6 +47,7 @@ for file in glob.iglob('data/*.csv'):
         revenue = df.loc['Revenue CAD Mil',:].str.replace(',', '').astype(float) * CAD2USD
         netMargin = df.loc['Net Margin %',:].str.replace(',', '').astype(float)
         opCashFlow = df.loc['Operating Cash Flow CAD Mil',:].str.replace(',', '').astype(float) * CAD2USD
+        shortTermDebt = df.loc['Short-Term Debt',:].str.replace(',', '').astype(float) * CAD2USD
         longTermDebt = df.loc['Long-Term Debt',:].str.replace(',', '').astype(float) * CAD2USD
         earningsPerShare = df.loc['Earnings Per Share CAD',:].str.replace(',', '').astype(float) * CAD2USD
         currentAssets = df.loc['Total Current Assets',:].str.replace(',', '').astype(float) * CAD2USD
@@ -67,6 +68,7 @@ for file in glob.iglob('data/*.csv'):
     returnOnEquity['ID'] = 'returnOnEquity' + stockName
     revenue['ID'] = 'revenue' + stockName
     opCashFlow['ID'] = 'opCashFlow' + stockName
+    shortTermDebt['ID'] = 'shortTermDebt' + stockName
     longTermDebt['ID'] = 'longTermDebt' + stockName
     netMargin['ID'] = 'netMargin' + stockName
     revenue_share['ID'] = 'revenue/share' + stockName
@@ -77,8 +79,8 @@ for file in glob.iglob('data/*.csv'):
     currentRatio['ID'] = 'currentRatio' + stockName
     
     # Combine this stocks data into a single df and merge with the rest of the data
-    objs = [netIncome, dividends, shares, payoutRatio, returnOnEquity, revenue, opCashFlow, longTermDebt, netMargin,
-    revenue_share, opCashFlow_share, longTermDebt_share, earningsPerShare, bookValuePerShare, currentRatio]
+    objs = [netIncome, dividends, shares, payoutRatio, returnOnEquity, revenue, opCashFlow, shortTermDebt, longTermDebt,
+    netMargin, revenue_share, opCashFlow_share, longTermDebt_share, earningsPerShare, bookValuePerShare, currentRatio]
     
     temp = pd.concat(objs, axis=1, ignore_index=True).T
     masterDF = pd.concat([masterDF, temp])
