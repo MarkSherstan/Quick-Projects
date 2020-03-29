@@ -32,8 +32,6 @@ for file in glob.iglob('keyRatiosData/*.csv'):
         revenue = df.loc['Revenue USD Mil',:].str.replace(',', '').astype(float)
         netMargin = df.loc['Net Margin %',:].str.replace(',', '').astype(float)
         opCashFlow = df.loc['Operating Cash Flow USD Mil',:].str.replace(',', '').astype(float)
-        shortTermDebt = df.loc['Short-Term Debt',:].str.replace(',', '').astype(float)
-        longTermDebt = df.loc['Long-Term Debt',:].str.replace(',', '').astype(float)
         earningsPerShare = df.loc['Earnings Per Share USD',:].str.replace(',', '').astype(float)
         currentAssets = df.loc['Total Current Assets',:].str.replace(',', '').astype(float)
         currentLiabilities = df.loc['Total Current Liabilities',:].str.replace(',', '').astype(float)
@@ -47,8 +45,6 @@ for file in glob.iglob('keyRatiosData/*.csv'):
         revenue = df.loc['Revenue CAD Mil',:].str.replace(',', '').astype(float) * CAD2USD
         netMargin = df.loc['Net Margin %',:].str.replace(',', '').astype(float)
         opCashFlow = df.loc['Operating Cash Flow CAD Mil',:].str.replace(',', '').astype(float) * CAD2USD
-        shortTermDebt = df.loc['Short-Term Debt',:].str.replace(',', '').astype(float) * CAD2USD
-        longTermDebt = df.loc['Long-Term Debt',:].str.replace(',', '').astype(float) * CAD2USD
         earningsPerShare = df.loc['Earnings Per Share CAD',:].str.replace(',', '').astype(float) * CAD2USD
         currentAssets = df.loc['Total Current Assets',:].str.replace(',', '').astype(float) * CAD2USD
         currentLiabilities = df.loc['Total Current Liabilities',:].str.replace(',', '').astype(float) * CAD2USD
@@ -57,7 +53,6 @@ for file in glob.iglob('keyRatiosData/*.csv'):
     # Calculate a few ratios
     revenue_share = revenue/shares
     opCashFlow_share = opCashFlow/shares
-    longTermDebt_share = longTermDebt/shares
     currentRatio = currentAssets/currentLiabilities
     
     # Only log data that is important
@@ -68,19 +63,16 @@ for file in glob.iglob('keyRatiosData/*.csv'):
     returnOnEquity['ID'] = 'returnOnEquity' + stockName
     revenue['ID'] = 'revenue' + stockName
     opCashFlow['ID'] = 'opCashFlow' + stockName
-    shortTermDebt['ID'] = 'shortTermDebt' + stockName
-    longTermDebt['ID'] = 'longTermDebt' + stockName
     netMargin['ID'] = 'netMargin' + stockName
     revenue_share['ID'] = 'revenue/share' + stockName
     opCashFlow_share['ID'] = 'opCashFlow/share' + stockName
-    longTermDebt_share['ID'] = 'longTermDebt/share' + stockName
     earningsPerShare['ID'] = 'earningsPerShare' + stockName
     bookValuePerShare['ID'] = 'bookValuePerShare' + stockName
     currentRatio['ID'] = 'currentRatio' + stockName
     
     # Combine this stocks data into a single df and merge with the rest of the data
-    objs = [netIncome, dividends, shares, payoutRatio, returnOnEquity, revenue, opCashFlow, shortTermDebt, longTermDebt,
-    netMargin, revenue_share, opCashFlow_share, longTermDebt_share, earningsPerShare, bookValuePerShare, currentRatio]
+    objs = [netIncome, dividends, shares, payoutRatio, returnOnEquity, revenue, opCashFlow, netMargin,
+            revenue_share, opCashFlow_share, earningsPerShare, bookValuePerShare, currentRatio]
     
     temp = pd.concat(objs, axis=1, ignore_index=True).T
     masterDF = pd.concat([masterDF, temp])
