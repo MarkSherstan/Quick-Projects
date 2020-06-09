@@ -6,20 +6,20 @@ def main():
     desiredWidth  = 1280
     desiredHeight = 960
     desiredFPS    = 30
-    autoFocus     = 0
-    
+
     ################
     # Calibration
     ################
     
-    # CC = CalibrateCamera(desiredWidth, desiredHeight, desiredFPS, autoFocus)
+    CC = CalibrateCamera()
 
     # CC.generateCharucoBoard()
-    # CC.generateArucoMarker(ID=97, size=90)
+    # CC.generateArucoMarker(ID=97, size=100)
     # CC.generateArucoMarker(ID=35, size=300)
-    # CC.generateArucoMarker(ID=17, size=500)
+    # CC.generateArucoMarker(ID=17, size=700)
 
-    # CC.captureCalibrationImages()
+    CC.connectCamera(desiredWidth, desiredHeight, desiredFPS)
+    CC.captureCalibrationImages()
     # CC.calibrateCamera()
     # CC.getCalibration()
     # print(CC.mtx)
