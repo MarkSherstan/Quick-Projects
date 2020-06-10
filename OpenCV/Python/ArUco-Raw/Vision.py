@@ -51,9 +51,9 @@ class Vision:
             assert(self.isRotationMatrix(R))
 
             # Dont rotate more than 45 degrees in any direction and we will not get gimbal lock / singularities
-            roll =  math.degrees(-math.asin(R[2,0]))
+            roll  = math.degrees(-math.asin(R[2,0]))
             pitch = math.degrees(math.atan2(R[2,1], R[2,2]))
-            yaw =  math.degrees(math.atan2(R[1,0], R[0,0]))
+            yaw   = math.degrees(math.atan2(R[1,0], R[0,0]))
             
             # Return results
             return roll, pitch, yaw
@@ -64,21 +64,21 @@ class Vision:
 
     def transform2Body(self, R, t):
         # Original
-        Tbc = np.append(R, np.transpose(t), axis=1)
-        Tbc = np.append(Tbc, np.array([[0, 0, 0, 1]]), axis=0)
+        Tca = np.append(R, np.transpose(t), axis=1)
+        Tca = np.append(Tca, np.array([[0, 0, 0, 1]]), axis=0)
 
         # Transformation
-        Tab = np.array([[0,  0,  1,  10],
+        Tbc = np.array([[0,  0,  1,  10],
                         [1,  0,  0,   0],
-                        [0, -1,  0,  -2],
+                        [0,  1,  0,  -2],
                         [0,  0,  0,   1]])
 
         # Resultant pose
-        Tac = np.dot(Tab, Tbc)
+        Tba = np.dot(Tbc, Tca)
 
         # Return results
-        R = Tac[0:3,0:3]
-        t = Tac[0:3,3]
+        R = Tba[0:3,0:3]
+        t = Tba[0:3,3]
 
         # Return reults 
         return R, t
@@ -137,9 +137,9 @@ class Vision:
                     down  = t[2]
 
                     # Fix yaw
-                    roll *= -1
-                    pitch = (pitch - 90) * -1
-                    yaw -= 90
+                    roll = roll
+                    pitch = (pitch + 90) * -1
+                    yaw = (yaw - 90) * -1
 
                     # Add values to frame 
                     cv2.putText(frame, "N: " + str(round(north,1)), (0, 50), font, 1, fontColor, 2)
