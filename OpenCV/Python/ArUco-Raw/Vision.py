@@ -45,35 +45,43 @@ class Vision:
         n = np.linalg.norm(I - shouldBeIdentity)
         return n < 1e-6
 
-    def rotationMatrixToEulerAngles(self, R):
-        # Check if rotation matrix is valid
-        assert(self.isRotationMatrix(R))
+    def rotationMatrix2EulerAngles(self, R):
+        try:
+            # Check if rotation matrix is valid
+            assert(self.isRotationMatrix(R))
 
-        # Check if singular
-        sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+            # Dont rotate more than 45 degrees in any direction and we will not get gimbal lock / singularities
+            roll =  math.degrees(-math.asin(R[2,0]))
+            pitch = math.degrees(math.atan2(R[2,1], R[2,2]))
+            yaw =  math.degrees(math.atan2(R[1,0], R[0,0]))
+            
+            # Return results
+            return roll, pitch, yaw
+        except:
+            # Return 0's upon failure
+            print('Not a rotation matrix')
+            return 0, 0, 0
 
-        # if (sy < 1e-6):
-        #     # Singular
-        #     x = math.atan2(-R[1,2], R[1,1])
-        #     y = math.atan2(-R[2,0], sy)
-        #     z = 0
-        # else:
-        #     # Not singular
-        #     x = math.atan2(R[2,1] , R[2,2])
-        #     y = math.atan2(-R[2,0], sy)
-        #     z = math.atan2(R[1,0], R[0,0])
-        Rab = np.array([[0, 0, -1],
-                        [1, 0,  0],
-                        [0, -1, 0]])
-        R = np.dot(Rab, R)
+    def transform2Body(self, R, t):
+        # Original
+        Tbc = np.append(R, np.transpose(t), axis=1)
+        Tbc = np.append(Tbc, np.array([[0, 0, 0, 1]]), axis=0)
 
-        roll = -math.asin(R[2,0])
-        pitch = math.atan2(R[2,1], R[2,2])
-        yaw = math.atan2(R[1,0], R[0,0])
-        
-        return np.array([roll, pitch, yaw])
-        # Return roll, pitch, and yaw in some order
-        # return np.array([x, y, z])
+        # Transformation
+        Tab = np.array([[0,  0,  -1,  10],
+                        [1,  0,   0,   0],
+                        [0, -1,   0,  -2],
+                        [0,  0,   0,   1]])
+
+        # Resultant pose
+        Tac = np.dot(Tab, Tbc)
+
+        # Return results
+        R = Tac[0:3,0:3]
+        t = Tac[0:3,3]
+
+        # Return reults 
+        return R, t
 
     def trackAruco(self, lengthMarker=0.247):
         # Get calibration data
@@ -96,6 +104,9 @@ class Vision:
             _, frame = self.cam.read()
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+            # Flip the image back to normal
+            # gray = cv2.rotate(gray, cv2.ROTATE_180)
+
             # lists of ids and corners belonging to each id
             corners, ids, _ = aruco.detectMarkers(gray, self.arucoDict, parameters=parameters)
 
@@ -111,28 +122,36 @@ class Vision:
                 # Draw square around markers
                 aruco.drawDetectedMarkers(frame, corners)
 
-                # Print ids found in top left and to the screen
-                idz = ''
+                # Hopefully there is only one marker for now... 
                 for ii in range(0, ids.size):
-                    idz += str(ids[ii][0])+' '
-                    x = round(tvec[ii][0][0],1)
-                    y = round(tvec[ii][0][1],1)
-                    z = round(tvec[ii][0][2],1)
-
-                    cv2.putText(frame, "ID: " + idz, (0, 25), font, 1, fontColor, 2)
-                    cv2.putText(frame, "X: " + str(x), (0, 50), font, 1, fontColor, 2)
-                    cv2.putText(frame, "Y: " + str(y), (0, 75), font, 1, fontColor, 2)
-                    cv2.putText(frame, "Z: " + str(z), (0, 100), font, 1, fontColor, 2)
-
-                    # Convert to rotation matrix and extract yaw
+                    # Convert to rotation matrix
                     R, _ = cv2.Rodrigues(rvec[ii])
-                    eulerAngles = self.rotationMatrixToEulerAngles(R)
-                    roll = -math.degrees(eulerAngles[0])
-                    pitch = -math.degrees(eulerAngles[1]) + 90
-                    yaw = math.degrees(eulerAngles[2]) - 90
+
+                    # Convert to body frame and get roll, pitch, yaw
+                    R, t = self.transform2Body(R, tvec[ii])
+                    roll, pitch, yaw = self.rotationMatrix2EulerAngles(R)
+
+                    # Extract NED
+                    north = t[0]
+                    east  = t[1]
+                    down  = t[2]
+
+                    # Fix yaw
+                    roll *= -1
+                    pitch = (pitch - 90) * -1
+                    yaw -= 90
+
+                    # Add values to frame 
+                    cv2.putText(frame, "N: " + str(round(north,1)), (0, 50), font, 1, fontColor, 2)
+                    cv2.putText(frame, "E: " + str(round(east,1)), (0, 75), font, 1, fontColor, 2)
+                    cv2.putText(frame, "D: " + str(round(down,1)), (0, 100), font, 1, fontColor, 2)
+
+                    cv2.putText(frame, "R: " + str(round(roll,1)), (0, 150), font, 1, fontColor, 2)
+                    cv2.putText(frame, "P: " + str(round(pitch,1)), (0, 175), font, 1, fontColor, 2)
+                    cv2.putText(frame, "Y: " + str(round(yaw,1)), (0, 200), font, 1, fontColor, 2)
 
                     # Print values
-                    print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
+                    print('n: {:<8.1f} e: {:<8.1f} d: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(north, east, down, roll, pitch, yaw))
 
             # display the resulting frame
             cv2.imshow('frame', frame)
