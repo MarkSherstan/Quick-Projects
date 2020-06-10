@@ -3,9 +3,10 @@ import pickle
 import glob
 import cv2
 import cv2.aruco as aruco
+import math
 
 class Vision:
-    def __init__(self, desiredWidth, desiredHeight, desiredFPS, autoFocus, src=1):
+    def __init__(self, desiredWidth, desiredHeight, desiredFPS, autoFocus=0, src=1):
         # Set dictionary
         self.arucoDict = aruco.Dictionary_get(aruco.DICT_5X5_1000)
 
@@ -30,12 +31,48 @@ class Vision:
         self.mtx = None
         self.dist = None
 
+    def getCalibration(self):
+        # Open file, retrieve variables, and close
+        file = open('calibration.pckl', 'rb')
+        self.mtx, self.dist = pickle.load(file)
+        file.close()
+
+    def isRotationMatrix(self, R):
+        # Checks if matrix is valid
+        Rt = np.transpose(R)
+        shouldBeIdentity = np.dot(Rt, R)
+        I = np.identity(3, dtype = R.dtype)
+        n = np.linalg.norm(I - shouldBeIdentity)
+        return n < 1e-6
+
+    def rotationMatrixToEulerAngles(self, R):
+        # Check if rotation matrix is valid
+        assert(self.isRotationMatrix(R))
+
+        # Check if singular
+        sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+
+        if (sy < 1e-6):
+            # Singular
+            x = math.atan2(-R[1,2], R[1,1])
+            y = math.atan2(-R[2,0], sy)
+            z = 0
+        else:
+            # Not singular
+            x = math.atan2(R[2,1] , R[2,2])
+            y = math.atan2(-R[2,0], sy)
+            z = math.atan2(R[1,0], R[0,0])
+
+        # Return roll, pitch, and yaw in some order
+        return np.array([x, y, z])
+
     def trackAruco(self, lengthMarker=0.247):
         # Get calibration data
         try:
             self.getCalibration()
         except:
             print('Calibration not found!')
+            return
 
         # Font and color for screen writing
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -60,7 +97,7 @@ class Vision:
 
                 # Draw axis for each aruco marker found
                 for ii in range(0, ids.size):
-                    aruco.drawAxis(frame, self.mtx, self.dist, rvec[ii], tvec[ii], 0.1)
+                    aruco.drawAxis(frame, self.mtx, self.dist, rvec[ii], tvec[ii], 10)
 
                 # Draw square around markers
                 aruco.drawDetectedMarkers(frame, corners)
@@ -73,13 +110,20 @@ class Vision:
                     y = round(tvec[ii][0][1],1)
                     z = round(tvec[ii][0][2],1)
 
+                    cv2.putText(frame, "ID: " + idz, (0, 25), font, 1, fontColor, 2)
                     cv2.putText(frame, "X: " + str(x), (0, 50), font, 1, fontColor, 2)
                     cv2.putText(frame, "Y: " + str(y), (0, 75), font, 1, fontColor, 2)
                     cv2.putText(frame, "Z: " + str(z), (0, 100), font, 1, fontColor, 2)
 
-                    print(x,y,z)
+                    # Convert to rotation matrix and extract yaw
+                    R, _ = cv2.Rodrigues(rvec[ii])
+                    eulerAngles = self.rotationMatrixToEulerAngles(R)
+                    roll = math.degrees(eulerAngles[2])
+                    pitch = math.degrees(eulerAngles[0])
+                    yaw = math.degrees(eulerAngles[1])
 
-                cv2.putText(frame, "ID: " + idz, (0, 25), font, 1, fontColor, 2)
+                    # Print values
+                    print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
 
             # display the resulting frame
             cv2.imshow('frame', frame)
@@ -89,10 +133,3 @@ class Vision:
         # When complete close everything down
         self.cam.release()
         cv2.destroyAllWindows()
-
-    def getCalibration(self):
-        # Open file, retrieve variables, and close
-        file = open('calibration.pckl', 'rb')
-        self.mtx, self.dist = pickle.load(file)
-        file.close()
-        
