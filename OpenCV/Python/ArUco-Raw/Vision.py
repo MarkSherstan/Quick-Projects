@@ -69,8 +69,8 @@ class Vision:
 
         # Transformation
         Tbc = np.array([[0,  0,  1,  10],
-                        [1,  0,  0,   0],
-                        [0,  1,  0,  -2],
+                        [1,  0,  0,  0],
+                        [0,  1,  0,  0],
                         [0,  0,  0,   1]])
 
         # Resultant pose
@@ -104,7 +104,7 @@ class Vision:
             _, frame = self.cam.read()
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            # Flip the image back to normal
+            # Flip the image back to normal if inverted
             # gray = cv2.rotate(gray, cv2.ROTATE_180)
 
             # lists of ids and corners belonging to each id
