@@ -126,6 +126,28 @@ class Test:
 
         return R
 
+    def transform2Body(self, R, t):
+        # print(R)
+        # print(t)
+
+        # Original
+        Tbc = np.append(R, np.transpose(t), axis=1)
+        Tbc = np.append(Tbc, np.array([[0, 0, 0, 1]]), axis=0)
+
+        # Transformation
+        Tab = np.array([[0,  0,  -1,  10],
+                        [1,  0,   0,   0],
+                        [0, -1,   0,  -2],
+                        [0,  0,   0,   1]])
+
+        # Resultant pose
+        Tac = np.dot(Tab, Tbc)
+
+        # Print results
+        print('x: {:<8.0f} y: {:<8.0f} z: {:<8.0f}'.format(Tbc[0,3], Tbc[1,3], Tbc[2,3]))
+        print('x: {:<8.0f} y: {:<8.0f} z: {:<8.0f}'.format(Tab[0,3], Tab[1,3], Tab[2,3]))
+        print('x: {:<8.0f} y: {:<8.0f} z: {:<8.0f}'.format(Tac[0,3], Tac[1,3], Tac[2,3]))
+
     def analyze(self, lengthMarker=24.7):
         # Get the calibration
         try:
@@ -183,9 +205,10 @@ class Test:
                 pitch = -math.degrees(eulerAngles[1]) + 90
                 yaw = math.degrees(eulerAngles[2]) - 90
 
-                
+                self.transform2Body(R, tvec[ii])
+
                 # Print values
-                print(R)
+                # print(R)
                 # print(R2)
                 print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
 
