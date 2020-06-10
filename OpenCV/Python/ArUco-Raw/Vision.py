@@ -22,7 +22,7 @@ class Vision:
             self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.desiredWidth)
             self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.desiredHeight)
             self.cam.set(cv2.CAP_PROP_FPS, self.desiredFPS)
-            self.cam.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+            self.cam.set(cv2.CAP_PROP_AUTOFOCUS, self.autoFocus)
             print('Camera start')
         except:
             print('Camera setup failed')
@@ -52,19 +52,28 @@ class Vision:
         # Check if singular
         sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
 
-        if (sy < 1e-6):
-            # Singular
-            x = math.atan2(-R[1,2], R[1,1])
-            y = math.atan2(-R[2,0], sy)
-            z = 0
-        else:
-            # Not singular
-            x = math.atan2(R[2,1] , R[2,2])
-            y = math.atan2(-R[2,0], sy)
-            z = math.atan2(R[1,0], R[0,0])
+        # if (sy < 1e-6):
+        #     # Singular
+        #     x = math.atan2(-R[1,2], R[1,1])
+        #     y = math.atan2(-R[2,0], sy)
+        #     z = 0
+        # else:
+        #     # Not singular
+        #     x = math.atan2(R[2,1] , R[2,2])
+        #     y = math.atan2(-R[2,0], sy)
+        #     z = math.atan2(R[1,0], R[0,0])
+        Rab = np.array([[0, 0, -1],
+                        [1, 0,  0],
+                        [0, -1, 0]])
+        R = np.dot(Rab, R)
 
+        roll = -math.asin(R[2,0])
+        pitch = math.atan2(R[2,1], R[2,2])
+        yaw = math.atan2(R[1,0], R[0,0])
+        
+        return np.array([roll, pitch, yaw])
         # Return roll, pitch, and yaw in some order
-        return np.array([x, y, z])
+        # return np.array([x, y, z])
 
     def trackAruco(self, lengthMarker=0.247):
         # Get calibration data
@@ -118,9 +127,9 @@ class Vision:
                     # Convert to rotation matrix and extract yaw
                     R, _ = cv2.Rodrigues(rvec[ii])
                     eulerAngles = self.rotationMatrixToEulerAngles(R)
-                    roll = math.degrees(eulerAngles[2])
-                    pitch = math.degrees(eulerAngles[0])
-                    yaw = math.degrees(eulerAngles[1])
+                    roll = -math.degrees(eulerAngles[0])
+                    pitch = -math.degrees(eulerAngles[1]) + 90
+                    yaw = math.degrees(eulerAngles[2]) - 90
 
                     # Print values
                     print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
