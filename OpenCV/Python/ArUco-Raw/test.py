@@ -135,10 +135,10 @@ class Test:
         Tbc = np.append(Tbc, np.array([[0, 0, 0, 1]]), axis=0)
 
         # Transformation
-        Tab = np.array([[0,  0,  -1,  10],
-                        [1,  0,   0,   0],
-                        [0, -1,   0,  -2],
-                        [0,  0,   0,   1]])
+        Tab = np.array([[0,  0,  1,  10],
+                        [1,  0,  0,   0],
+                        [0, -1,  0,  -2],
+                        [0,  0,  0,   1]])
 
         # Resultant pose
         Tac = np.dot(Tab, Tbc)
@@ -213,8 +213,8 @@ class Test:
                 print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
 
         # Show final image
-        # cv2.imshow('Processed', self.img)                
-        # cv2.waitKey(0)
+        cv2.imshow('Processed', self.img)                
+        cv2.waitKey(0)
 
 # Predefined dictionaries: DICT_6X6_250 is an example of predefined dictionary of markers with 6x6 bits and a total of 250 markers.
 # From all the provided dictionaries, it is recommended to choose the smallest one that fits your application. For instance, if you need 200 markers of 6x6 bits, it is better to use DICT_6X6_250 than DICT_6X6_1000. The smaller the dictionary, the higher the inter-marker distance.

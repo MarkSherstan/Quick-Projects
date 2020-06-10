@@ -68,10 +68,10 @@ class Vision:
         Tbc = np.append(Tbc, np.array([[0, 0, 0, 1]]), axis=0)
 
         # Transformation
-        Tab = np.array([[0,  0,  -1,  10],
-                        [1,  0,   0,   0],
-                        [0, -1,   0,  -2],
-                        [0,  0,   0,   1]])
+        Tab = np.array([[0,  0,  1,  10],
+                        [1,  0,  0,   0],
+                        [0, -1,  0,  -2],
+                        [0,  0,  0,   1]])
 
         # Resultant pose
         Tac = np.dot(Tab, Tbc)
