@@ -72,7 +72,7 @@ class CalibrateCamera:
 
             if key != -1:
                 if key & 0xFF == ord(' '):
-                    indexedFile = self.calibrationDir + 'IMG_' + str(index) + self.imgExtension
+                    indexedFile = self.calibrationDir + 'IMG_' + str(index+1) + self.imgExtension
                     print(indexedFile)
                     cv2.imwrite(indexedFile, frame)
                     index += 1
@@ -174,9 +174,14 @@ class CalibrateCamera:
         pickle.dump((self.mtx, self.dist), f)
         f.close()
 
-    def getCalibration(self):
+    def getCalibration(self, printFlag=False):
         # Open file, retrieve variables, and close
-        file = open('resources/calibration.pckl', 'rb')
+        file = open('calibration.pckl', 'rb')
         self.mtx, self.dist = pickle.load(file)
         file.close()
+
+        # Print results
+        if printFlag is True:
+            print(self.mtx)
+            print(self.dist)
         
