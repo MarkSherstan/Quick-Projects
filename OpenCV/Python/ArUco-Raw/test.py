@@ -74,7 +74,7 @@ class Test:
         n = np.linalg.norm(I - shouldBeIdentity)
         return n < 1e-6
 
-    def rotationMatrixToEulerAngles(self, R):
+    def rotationMatrix2Euler(self, R):
         # Check if rotation matrix is valid
         assert(self.isRotationMatrix(R))
 
@@ -95,6 +95,26 @@ class Test:
         # Return roll, pitch, and yaw in some order
         return np.array([x, y, z])
 
+    # Calculates Rotation Matrix given euler angles.
+    def euler2RotationMatrix(self, roll, pitch, yaw):
+        angle = np.array([math.radians(roll), math.radians(pitch), math.radians(yaw)])
+
+        Rx = np.array([[1,         0,                    0                  ],
+                       [0,         math.cos(angle[0]),  -math.sin(angle[0]) ],
+                       [0,         math.sin(angle[0]),   math.cos(angle[0]) ]])
+                             
+        Ry = np.array([[ math.cos(angle[1]),    0,      math.sin(angle[1]) ],
+                       [ 0,                     1,      0                  ],
+                       [-math.sin(angle[1]),    0,      math.cos(angle[1]) ]])
+                    
+        Rz = np.array([[math.cos(angle[2]),    -math.sin(angle[2]),    0 ],
+                       [math.sin(angle[2]),     math.cos(angle[2]),    0 ],
+                       [0,                     0,                      1 ]])
+                                     
+        R = np.dot(Rz, np.dot(Ry, Rx))
+
+        return R
+
     def analyze(self, lengthMarker=24.7):
         # Get the calibration
         try:
@@ -109,8 +129,13 @@ class Test:
 
         # Convert frame to grey and show
         gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('Test Image', gray)                
-        cv2.waitKey(0)
+        # cv2.imshow('Test Image', gray)                
+        # cv2.waitKey(0)
+
+        # Rotate image
+        # gray = cv2.rotate(gray, cv2.ROTATE_180)
+        # cv2.imshow('Test Image 180', gray)                
+        # cv2.waitKey(0)
 
         # lists of ids and corners belonging to each id
         corners, ids, _ = aruco.detectMarkers(gray, self.arucoDict, parameters=parameters)
@@ -137,18 +162,20 @@ class Test:
 
                 # Convert to rotation matrix and extract yaw
                 R, _ = cv2.Rodrigues(rvec[ii])
-                eulerAngles = self.rotationMatrixToEulerAngles(R)
+                eulerAngles = self.rotationMatrix2Euler(R)
                 roll = math.degrees(eulerAngles[0])
                 pitch = math.degrees(eulerAngles[1])
                 yaw = math.degrees(eulerAngles[2])
+                R2 = self.euler2RotationMatrix(roll, pitch, yaw)
 
                 # Print values
                 print(R)
+                print(R2)
                 print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
 
         # Show final image
-        cv2.imshow('Processed', self.img)                
-        cv2.waitKey(0)
+        # cv2.imshow('Processed', self.img)                
+        # cv2.waitKey(0)
 
 
 
