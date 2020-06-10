@@ -81,19 +81,30 @@ class Test:
         # Check if singular
         sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
 
-        if (sy < 1e-6):
-            # Singular
-            x = math.atan2(-R[1,2], R[1,1])
-            y = math.atan2(-R[2,0], sy)
-            z = 0
-        else:
-            # Not singular
-            x = math.atan2(R[2,1] , R[2,2])
-            y = math.atan2(-R[2,0], sy)
-            z = math.atan2(R[1,0], R[0,0])
+        # if (sy < 1e-6):
+        #     # Singular
+        #     x = math.atan2(-R[1,2], R[1,1])
+        #     y = math.atan2(-R[2,0], sy)
+        #     z = 0
+        # else:
+        #     # Not singular
+        #     x = math.atan2(R[2,1] , R[2,2])
+        #     y = math.atan2(-R[2,0], sy)
+        #     z = math.atan2(R[1,0], R[0,0])
 
-        # Return roll, pitch, and yaw in some order
-        return np.array([x, y, z])
+        Rab = np.array([[0, 0, -1],
+                        [1, 0,  0],
+                        [0, -1, 0]])
+        R = np.dot(Rab, R)
+
+        roll = -math.asin(R[2,0])
+        pitch = math.atan2(R[2,1], R[2,2])
+        yaw = math.atan2(R[1,0], R[0,0])
+
+        return np.array([roll, pitch, yaw])
+
+        # # Return roll, pitch, and yaw in some order
+        # return np.array([x, y, z])
 
     # Calculates Rotation Matrix given euler angles.
     def euler2RotationMatrix(self, roll, pitch, yaw):
@@ -163,21 +174,28 @@ class Test:
                 # Convert to rotation matrix and extract yaw
                 R, _ = cv2.Rodrigues(rvec[ii])
                 eulerAngles = self.rotationMatrix2Euler(R)
-                roll = math.degrees(eulerAngles[0])
-                pitch = math.degrees(eulerAngles[1])
-                yaw = math.degrees(eulerAngles[2])
-                R2 = self.euler2RotationMatrix(roll, pitch, yaw)
+                # roll = math.degrees(eulerAngles[0])
+                # pitch = math.degrees(eulerAngles[1])
+                # yaw = math.degrees(eulerAngles[2])
+                # R2 = self.euler2RotationMatrix(roll, pitch, yaw)
 
+                roll = -math.degrees(eulerAngles[0])
+                pitch = -math.degrees(eulerAngles[1]) + 90
+                yaw = math.degrees(eulerAngles[2]) - 90
+
+                
                 # Print values
                 print(R)
-                print(R2)
+                # print(R2)
                 print('x: {:<8.1f} y: {:<8.1f} z: {:<8.1f} r: {:<8.1f} p: {:<8.1f} y: {:<8.1f}'.format(x, y, z, roll, pitch, yaw))
 
         # Show final image
         # cv2.imshow('Processed', self.img)                
         # cv2.waitKey(0)
 
-
+# Predefined dictionaries: DICT_6X6_250 is an example of predefined dictionary of markers with 6x6 bits and a total of 250 markers.
+# From all the provided dictionaries, it is recommended to choose the smallest one that fits your application. For instance, if you need 200 markers of 6x6 bits, it is better to use DICT_6X6_250 than DICT_6X6_1000. The smaller the dictionary, the higher the inter-marker distance.
+# https://docs.opencv.org/trunk/d5/dae/tutorial_aruco_detection.html
 
 def main():
     t = Test()
