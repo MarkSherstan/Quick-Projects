@@ -51,8 +51,8 @@ class Vision:
             assert(self.isRotationMatrix(R))
 
             # Dont rotate more than 45 degrees in any direction and we will not get gimbal lock / singularities
-            roll  = math.degrees(-math.asin(R[2,0]))
-            pitch = math.degrees(math.atan2(R[2,1], R[2,2]))
+            roll = math.degrees(math.atan2(R[2,1], R[2,2]))
+            pitch  = math.degrees(-math.asin(R[2,0]))
             yaw   = math.degrees(math.atan2(R[1,0], R[0,0]))
             
             # Return results
@@ -68,10 +68,10 @@ class Vision:
         Tca = np.append(Tca, np.array([[0, 0, 0, 1]]), axis=0)
 
         # Transformation
-        Tbc = np.array([[0,  0,  1,  10],
+        Tbc = np.array([[0,  0,  1,  0],
                         [1,  0,  0,  0],
                         [0,  1,  0,  0],
-                        [0,  0,  0,   1]])
+                        [0,  0,  0,  1]])
 
         # Resultant pose
         Tba = np.dot(Tbc, Tca)
@@ -127,19 +127,22 @@ class Vision:
                     # Convert to rotation matrix
                     R, _ = cv2.Rodrigues(rvec[ii])
 
+                    # Fix the frame? -> what coordinate system is this being calculated in?? Should be fine. Just simplifying
+                    # Rfix = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]]) 
+                    # R = np.dot(Rfix, R)
+                    
                     # Convert to body frame and get roll, pitch, yaw
                     R, t = self.transform2Body(R, tvec[ii])
+                      
+                    # Rfix = np.array([[0, 0, -1], [1, 0, 0], [0, -1, 0]]) 
+                    # R = np.dot(Rfix, R)
+                                      
                     roll, pitch, yaw = self.rotationMatrix2EulerAngles(R)
 
                     # Extract NED
-                    north = t[0]
-                    east  = t[1]
-                    down  = t[2]
-
-                    # Fix yaw
-                    roll = roll
-                    pitch = (pitch + 90) * -1
-                    yaw = (yaw - 90) * -1
+                    north = 0 #t[0]
+                    east  = 0 #t[1]
+                    down  = 0 #t[2]
 
                     # Add values to frame 
                     cv2.putText(frame, "N: " + str(round(north,1)), (0, 50), font, 1, fontColor, 2)
