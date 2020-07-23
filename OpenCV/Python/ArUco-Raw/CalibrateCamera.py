@@ -1,37 +1,37 @@
 import numpy as np
 import pickle
+import time
 import glob
 import cv2
 import cv2.aruco as aruco
 
 class CalibrateCamera:
     def __init__(self):
-        # Set dictionary
-        self.arucoDict = aruco.Dictionary_get(aruco.DICT_5X5_1000)
-                
-        # Camera
-        self.cam = None
-        
-        # Calibration matrices
+        # Create custom dictionary (# markers, # bits)
+        self.arucoDict = aruco.custom_dictionary(17, 3)
+
+        # Calibration 
         self.mtx = None
         self.dist = None
 
-        # Folder paths and extensions
+        # Calibration directories
         self.calibrationDir = 'calibrationImgs/'
         self.imgExtension = '.jpg'
 
-    def connectCamera(self, desiredWidth, desiredHeight, desiredFPS, autoFocus=0, src=1):
-        # Connect to camera
+    def startCamera(self, desiredWidth=1280, desiredHeight=720, desiredFPS=30, src=0):
+        # Camera config     
         try:
             self.cam = cv2.VideoCapture(src)
             self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, desiredWidth)
             self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, desiredHeight)
             self.cam.set(cv2.CAP_PROP_FPS, desiredFPS)
-            self.cam.set(cv2.CAP_PROP_AUTOFOCUS, autoFocus)
+            self.cam.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+            self.cam.set(cv2.CAP_PROP_FOCUS, 0)
+            self.cam.set(cv2.CAP_PROP_ZOOM, 0)
+            self.cam.set(cv2.CAP_PROP_AUTOFOCUS, 0)
             print('Camera start')
         except:
-            print('Camera setup failed')
-        
+            print('Camera setup failed')        
         
     def generateCharucoBoard(self, rows=7, columns=5):
         # Create the board
@@ -46,7 +46,25 @@ class CalibrateCamera:
         # Save it to a file
         cv2.imwrite('CharucoBoard.png', img)
 
-    def generateArucoMarker(self, ID=7, size=700):
+    def generateArucoBoard(self, rows=3, columns=4):
+        # Create the board 
+        board = aruco.GridBoard_create(
+            markersX=columns,
+            markersY=rows,
+            markerLength=0.1,
+            markerSeparation=0.1/2,
+            dictionary=self.arucoDict)
+        img = board.draw((175*columns, 175*rows))
+        
+        # Show the image 
+        cv2.imshow('ArUco Board', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()        
+
+        # Save it to a file
+        cv2.imwrite('ArUcoBoard.png', img)
+      
+    def generateArucoMarker(self, ID=0, size=700):
         # Create an image from the marker
         img = aruco.drawMarker(self.arucoDict, ID, size)
 
@@ -83,7 +101,7 @@ class CalibrateCamera:
         self.cam.release()
         cv2.destroyAllWindows()
 
-    def calibrateCamera(self, rows=7, columns=5, lengthSquare=0.035, lengthMarker=0.0175):
+    def calibrateCamera(self, rows=7, columns=5, lengthSquare=0.0354, lengthMarker=0.0177):
         # Create charuco board with actual measured dimensions from print out
         board = aruco.CharucoBoard_create(
                     squaresX=columns,
@@ -91,6 +109,9 @@ class CalibrateCamera:
                     squareLength=lengthSquare,
                     markerLength=lengthMarker,
                     dictionary=self.arucoDict)
+
+        # Sub pixel corner detection criteria 
+        subPixCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
 
         # Storage variables
         cornerList = []
@@ -111,8 +132,14 @@ class CalibrateCamera:
             # Find aruco markers in the query image
             corners, ids, _ = aruco.detectMarkers(image=gray, dictionary=self.arucoDict)
 
-            # Outline the aruco markers found in the query image
-            img = aruco.drawDetectedMarkers(image=img, corners=corners)
+            # Sub pixel detection
+            for corner in corners:
+                cv2.cornerSubPix(
+                    image=gray, 
+                    corners=corner,
+                    winSize = (3,3),
+                    zeroZone = (-1,-1),
+                    criteria = subPixCriteria)
 
             # Get charuco corners and ids from detected aruco markers
             response, charucoCorners, charucoIDs = aruco.interpolateCornersCharuco(
@@ -127,12 +154,6 @@ class CalibrateCamera:
                 cornerList.append(charucoCorners)
                 idList.append(charucoIDs)
 
-                # Draw the Charuco board detected to show calibration results
-                img = aruco.drawDetectedCornersCharuco(
-                        image=img,
-                        charucoCorners=charucoCorners,
-                        charucoIds=charucoIDs)
-
                 # If image size is still None, set it to the image size
                 if not imageSize:
                     imageSize = gray.shape[::-1]
@@ -140,11 +161,6 @@ class CalibrateCamera:
             else:
                 # Error message
                 print('Error in: ' + str(filePath))
-                cv2.imshow('ERROR: ' + str(filePath), img)                
-                cv2.waitKey(0)
-
-        # Destroy any open windows
-        cv2.destroyAllWindows()
 
         # Make sure at least one image was found
         if len(paths) < 1:
@@ -156,6 +172,9 @@ class CalibrateCamera:
             print('Images supplied were not regonized by calibration')
             return
 
+        # Start a timer
+        startTime = time.time()
+
         # Run calibration
         _, self.mtx, self.dist, _, _ = aruco.calibrateCameraCharuco(
                 charucoCorners=cornerList,
@@ -165,23 +184,45 @@ class CalibrateCamera:
                 cameraMatrix=None,
                 distCoeffs=None)
 
+        # Print how long it took
+        print("Calibration took: ", round(time.time()-startTime),' s')
+
         # Display matrix and distortion coefficients
+        print('Image size: ', imageSize)
         print(self.mtx)
         print(self.dist)
 
         # Pickle the results
-        f = open('calibration.pckl', 'wb')
+        f = open('resources/calibration.pckl', 'wb')
         pickle.dump((self.mtx, self.dist), f)
         f.close()
 
-    def getCalibration(self, printFlag=False):
+    def getCalibration(self, printFlag=True):
         # Open file, retrieve variables, and close
-        file = open('calibration.pckl', 'rb')
+        file = open('resources/calibration.pckl', 'rb')
         self.mtx, self.dist = pickle.load(file)
         file.close()
 
-        # Print results
+        # Print results for later use
         if printFlag is True:
             print(self.mtx)
             print(self.dist)
         
+def main():    
+    # Initialize class
+    CC = CalibrateCamera()
+
+    # CC.generateCharucoBoard()
+    # CC.generateArucoBoard()
+    # CC.generateArucoMarker()
+
+    # CC.startCamera()
+    # CC.captureCalibrationImages()
+    # CC.calibrateCamera()
+
+    # CC.getCalibration()
+
+
+# Main loop
+if __name__ == '__main__':
+    main()
