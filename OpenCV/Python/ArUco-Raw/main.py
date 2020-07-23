@@ -11,15 +11,15 @@ def main():
     # Calibration
     ################
     
-    # CC = CalibrateCamera()
+     CC = CalibrateCamera()
 
     # CC.generateCharucoBoard()
     # CC.generateArucoMarker(ID=97, size=100)
     # CC.generateArucoMarker(ID=35, size=300)
     # CC.generateArucoMarker(ID=17, size=700)
 
-    # CC.connectCamera(desiredWidth, desiredHeight, desiredFPS, src=0)
-    # CC.captureCalibrationImages()
+     CC.connectCamera(desiredWidth, desiredHeight, desiredFPS, src=0)
+     CC.captureCalibrationImages()
     # CC.calibrateCamera()
     # CC.getCalibration(printFlag=True)
     
