@@ -1,3 +1,7 @@
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Ensure "no newline ending" is selected
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #include <Servo.h>
 
 // Pinout
@@ -5,7 +9,6 @@
 
 // Call servo class and set vars
 Servo myservo;
-int val;
 
 void setup() {
   // Serial setup
@@ -20,7 +23,7 @@ void setup() {
 void loop() {
   // Only write data to the servo if there is something in the serial port
   if (Serial.available() > 0) {
-    val = Serial.parseInt();
+    int val = Serial.parseInt();
     Serial.println(val);
     myservo.writeMicroseconds(val);
   }
